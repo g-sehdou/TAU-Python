@@ -1,0 +1,76 @@
+<html>
+<head>
+<title>dictionary.py</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #629755; font-style: italic;}
+.s1 { color: #a9b7c6;}
+.s2 { color: #6a8759;}
+.s3 { color: #6897bb;}
+.s4 { color: #cc7832;}
+.s5 { color: #808080;}
+.ln { color: #606366; font-weight: normal; font-style: normal; }
+</style>
+</head>
+<body bgcolor="#2b2b2b">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+dictionary.py</font>
+</center></td></tr></table>
+<pre><a name="l1"><span class="ln">1    </span></a><span class="s0">&quot;&quot;&quot; 
+<a name="l2"><span class="ln">2    </span></a>In this chapter, we'll learn about dictionaries. 
+<a name="l3"><span class="ln">3    </span></a>Dictionaries are a type of Python data collection that stores the data in key/value pairs. 
+<a name="l4"><span class="ln">4    </span></a>The keys are generally made of Strings, integers, or tuples, and need to be both unique and immutable. 
+<a name="l5"><span class="ln">5    </span></a>The values can be set to any data type and any number of key/value pairs can be contained in a dictionary. 
+<a name="l6"><span class="ln">6    </span></a>You can make an empty dictionary by assigning a dictionary name with nothing in the curly braces or your dictionary can contain millions of entries. 
+<a name="l7"><span class="ln">7    </span></a>Dictionaries are mutable and can be changed using the Python dictionary methods. 
+<a name="l8"><span class="ln">8    </span></a>As of Python 3.7, the order of a dictionary can be maintained. 
+<a name="l9"><span class="ln">9    </span></a>Dictionaries are created with curly braces and each key is separated from each value by a colon. Each key/value pair is separated from each other key/value pair with a comma. 
+<a name="l10"><span class="ln">10   </span></a>&quot;&quot;&quot;</span>
+<a name="l11"><span class="ln">11   </span></a>
+<a name="l12"><span class="ln">12   </span></a><span class="s1">price_list = {</span><span class="s2">&quot;launch&quot;</span><span class="s1">: </span><span class="s3">22</span><span class="s4">, </span><span class="s2">&quot;dinner&quot;</span><span class="s1">: </span><span class="s3">38</span><span class="s4">, </span><span class="s2">&quot;breakfast&quot;</span><span class="s1">: </span><span class="s3">14</span><span class="s1">}</span>
+<a name="l13"><span class="ln">13   </span></a>
+<a name="l14"><span class="ln">14   </span></a><span class="s5"># this will add new item to the list</span>
+<a name="l15"><span class="ln">15   </span></a><span class="s1">print(price_list.setdefault(</span><span class="s2">&quot;pizza&quot;</span><span class="s4">, </span><span class="s3">312</span><span class="s1">))</span>
+<a name="l16"><span class="ln">16   </span></a><span class="s1">print(price_list)</span>
+<a name="l17"><span class="ln">17   </span></a>
+<a name="l18"><span class="ln">18   </span></a><span class="s5"># update the dictonary items</span>
+<a name="l19"><span class="ln">19   </span></a><span class="s1">price_list.update(launch = </span><span class="s3">200</span><span class="s4">, </span><span class="s1">car = </span><span class="s3">4300  </span><span class="s1">)</span>
+<a name="l20"><span class="ln">20   </span></a><span class="s1">print(price_list)</span>
+<a name="l21"><span class="ln">21   </span></a>
+<a name="l22"><span class="ln">22   </span></a><span class="s2">&quot;&quot;&quot; 
+<a name="l23"><span class="ln">23   </span></a>print(price_list.items()) 
+<a name="l24"><span class="ln">24   </span></a>print(price_list.values()) 
+<a name="l25"><span class="ln">25   </span></a>print(price_list) 
+<a name="l26"><span class="ln">26   </span></a> 
+<a name="l27"><span class="ln">27   </span></a> 
+<a name="l28"><span class="ln">28   </span></a>The setdefault method allows us to see what the value is of a key that is in the dictionary,  
+<a name="l29"><span class="ln">29   </span></a>but more importantly, allows us to set a default value when a key is not in the dictionary and  
+<a name="l30"><span class="ln">30   </span></a>to add that value to the dictionary. 
+<a name="l31"><span class="ln">31   </span></a> 
+<a name="l32"><span class="ln">32   </span></a># Next up is setdefault. 
+<a name="l33"><span class="ln">33   </span></a>print(price_list.setdefault(&quot;party&quot;)) 
+<a name="l34"><span class="ln">34   </span></a>print(price_list) 
+<a name="l35"><span class="ln">35   </span></a>print(price_list.setdefault(&quot;party&quot;, 300)) 
+<a name="l36"><span class="ln">36   </span></a>print(price_list) 
+<a name="l37"><span class="ln">37   </span></a> 
+<a name="l38"><span class="ln">38   </span></a> 
+<a name="l39"><span class="ln">39   </span></a> 
+<a name="l40"><span class="ln">40   </span></a># The items method takes the name of the dictionary and outputs a view of the key/value pairs. 
+<a name="l41"><span class="ln">41   </span></a>print(price_list.items()) 
+<a name="l42"><span class="ln">42   </span></a>print(price_list) 
+<a name="l43"><span class="ln">43   </span></a># The get method return the value of one of the key in the dictonary 
+<a name="l44"><span class="ln">44   </span></a>print(price_list.get(&quot;launch&quot;)) 
+<a name="l45"><span class="ln">45   </span></a>print(price_list.values()) 
+<a name="l46"><span class="ln">46   </span></a># The keys method returns a view of all of the keys in the dictionary. 
+<a name="l47"><span class="ln">47   </span></a>print(price_list.keys()) 
+<a name="l48"><span class="ln">48   </span></a># The popitem method allows us to remove the last item in a dictionary. 
+<a name="l49"><span class="ln">49   </span></a>print(price_list.popitem()) 
+<a name="l50"><span class="ln">50   </span></a>print(price_list.clear()) 
+<a name="l51"><span class="ln">51   </span></a>&quot;&quot;&quot;</span>
+<a name="l52"><span class="ln">52   </span></a>
+<a name="l53"><span class="ln">53   </span></a>
+<a name="l54"><span class="ln">54   </span></a></pre>
+</body>
+</html>

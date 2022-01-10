@@ -1,0 +1,425 @@
+<html>
+<head>
+<title>fixture.py</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #808080;}
+.s1 { color: #a9b7c6;}
+.s2 { color: #629755; font-style: italic;}
+.s3 { color: #cc7832;}
+.s4 { color: #6a8759;}
+.s5 { color: #6897bb;}
+.ln { color: #606366; font-weight: normal; font-style: normal; }
+</style>
+</head>
+<body bgcolor="#2b2b2b">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+fixture.py</font>
+</center></td></tr></table>
+<pre><a name="l1"><span class="ln">1    </span></a><span class="s0"># -*- coding: UTF-8 -*-</span>
+<a name="l2"><span class="ln">2    </span></a><span class="s0"># STATUS: Basic concept works.</span>
+<a name="l3"><span class="ln">3    </span></a><span class="s2">&quot;&quot;&quot; 
+<a name="l4"><span class="ln">4    </span></a>A **fixture** provides a concept to simplify test support functionality 
+<a name="l5"><span class="ln">5    </span></a>that needs a setup/cleanup cycle per scenario, feature or test-run. 
+<a name="l6"><span class="ln">6    </span></a>A fixture is provided as fixture-function that contains the setup part and 
+<a name="l7"><span class="ln">7    </span></a>cleanup part similar to :func:`contextlib.contextmanager` or `pytest.fixture`_. 
+<a name="l8"><span class="ln">8    </span></a> 
+<a name="l9"><span class="ln">9    </span></a>.. _pytest.fixture: https://docs.pytest.org/en/latest/fixture.html 
+<a name="l10"><span class="ln">10   </span></a> 
+<a name="l11"><span class="ln">11   </span></a>A fixture is used when: 
+<a name="l12"><span class="ln">12   </span></a> 
+<a name="l13"><span class="ln">13   </span></a>* the (registered) fixture tag is used for a scenario or feature 
+<a name="l14"><span class="ln">14   </span></a>* the :func:`.use_fixture()` is called in the environment file (normally) 
+<a name="l15"><span class="ln">15   </span></a> 
+<a name="l16"><span class="ln">16   </span></a>.. sourcecode:: python 
+<a name="l17"><span class="ln">17   </span></a> 
+<a name="l18"><span class="ln">18   </span></a>    # -- FILE: behave4my_project/fixtures.py (or: features/environment.py) 
+<a name="l19"><span class="ln">19   </span></a>    from behave import fixture 
+<a name="l20"><span class="ln">20   </span></a>    from somewhere.browser.firefox import FirefoxBrowser 
+<a name="l21"><span class="ln">21   </span></a> 
+<a name="l22"><span class="ln">22   </span></a>    @fixture 
+<a name="l23"><span class="ln">23   </span></a>    def browser_firefox(context, timeout=30, **kwargs): 
+<a name="l24"><span class="ln">24   </span></a>        # -- SETUP-FIXTURE PART: 
+<a name="l25"><span class="ln">25   </span></a>        context.browser = FirefoxBrowser(timeout, *args, **kwargs) 
+<a name="l26"><span class="ln">26   </span></a>        yield context.browser 
+<a name="l27"><span class="ln">27   </span></a>        # -- CLEANUP-FIXTURE PART: 
+<a name="l28"><span class="ln">28   </span></a>        context.browser.shutdown() 
+<a name="l29"><span class="ln">29   </span></a> 
+<a name="l30"><span class="ln">30   </span></a>.. sourcecode:: gherkin 
+<a name="l31"><span class="ln">31   </span></a> 
+<a name="l32"><span class="ln">32   </span></a>    # -- FILE: features/use_fixture.feature 
+<a name="l33"><span class="ln">33   </span></a>    Feature: Use Fixture in Scenario 
+<a name="l34"><span class="ln">34   </span></a> 
+<a name="l35"><span class="ln">35   </span></a>        @fixture.browser.firefox 
+<a name="l36"><span class="ln">36   </span></a>        Scenario: Use browser=firefox 
+<a name="l37"><span class="ln">37   </span></a>          Given I use the browser 
+<a name="l38"><span class="ln">38   </span></a>          ... 
+<a name="l39"><span class="ln">39   </span></a>        # -- AFTER-SCENEARIO: Cleanup fixture.browser.firefox 
+<a name="l40"><span class="ln">40   </span></a> 
+<a name="l41"><span class="ln">41   </span></a>.. sourcecode:: python 
+<a name="l42"><span class="ln">42   </span></a> 
+<a name="l43"><span class="ln">43   </span></a>    # -- FILE: features/environment.py 
+<a name="l44"><span class="ln">44   </span></a>    from behave import use_fixture 
+<a name="l45"><span class="ln">45   </span></a>    from behave4my_project.fixtures import browser_firefox 
+<a name="l46"><span class="ln">46   </span></a> 
+<a name="l47"><span class="ln">47   </span></a>    def before_tag(context, tag): 
+<a name="l48"><span class="ln">48   </span></a>        if tag == &quot;fixture.browser.firefox&quot;: 
+<a name="l49"><span class="ln">49   </span></a>            # -- Performs fixture setup and registers fixture cleanup 
+<a name="l50"><span class="ln">50   </span></a>            use_fixture(browser_firefox, context, timeout=10) 
+<a name="l51"><span class="ln">51   </span></a> 
+<a name="l52"><span class="ln">52   </span></a>.. hidden: 
+<a name="l53"><span class="ln">53   </span></a> 
+<a name="l54"><span class="ln">54   </span></a>    BEHAVIORAL DECISIONS: 
+<a name="l55"><span class="ln">55   </span></a> 
+<a name="l56"><span class="ln">56   </span></a>    * Should scenario/feature be executed when fixture-setup fails 
+<a name="l57"><span class="ln">57   </span></a>      (similar to before-hook failures) ? 
+<a name="l58"><span class="ln">58   </span></a>      NO, scope is skipped, but after-hooks and cleanups are executed. 
+<a name="l59"><span class="ln">59   </span></a> 
+<a name="l60"><span class="ln">60   </span></a>    * Should remaining fixture-setups be performed after first fixture fails? 
+<a name="l61"><span class="ln">61   </span></a>      NO, first setup-error aborts the setup and execution of the scope. 
+<a name="l62"><span class="ln">62   </span></a> 
+<a name="l63"><span class="ln">63   </span></a>    * Should remaining fixture-cleanups be performed when first cleanup-error 
+<a name="l64"><span class="ln">64   </span></a>      occurs? 
+<a name="l65"><span class="ln">65   </span></a>      YES, try to perform all fixture-cleanups and then reraise the 
+<a name="l66"><span class="ln">66   </span></a>      first cleanup-error. 
+<a name="l67"><span class="ln">67   </span></a> 
+<a name="l68"><span class="ln">68   </span></a> 
+<a name="l69"><span class="ln">69   </span></a>    OPEN ISSUES: 
+<a name="l70"><span class="ln">70   </span></a> 
+<a name="l71"><span class="ln">71   </span></a>    * AUTO_CALL_REGISTERED_FIXTURE (planned in future): 
+<a name="l72"><span class="ln">72   </span></a>        Run fixture setup before or after before-hooks? 
+<a name="l73"><span class="ln">73   </span></a> 
+<a name="l74"><span class="ln">74   </span></a>    IDEAS: 
+<a name="l75"><span class="ln">75   </span></a> 
+<a name="l76"><span class="ln">76   </span></a>    * Fixture registers itself in fixture registry (runtime context). 
+<a name="l77"><span class="ln">77   </span></a>    * Code in before_tag() will either be replaced w/ fixture processing function 
+<a name="l78"><span class="ln">78   </span></a>      or will be automatically be executed (AUTO_CALL_REGISTERED_FIXTURE) 
+<a name="l79"><span class="ln">79   </span></a>    * Support fixture tags w/ parameters that are automatically parsed and 
+<a name="l80"><span class="ln">80   </span></a>      passed to fixture function, like: 
+<a name="l81"><span class="ln">81   </span></a>      @fixture(name=&quot;foo&quot;, pattern=&quot;{name}={browser}&quot;) 
+<a name="l82"><span class="ln">82   </span></a>&quot;&quot;&quot;</span>
+<a name="l83"><span class="ln">83   </span></a>
+<a name="l84"><span class="ln">84   </span></a><span class="s3">import </span><span class="s1">inspect</span>
+<a name="l85"><span class="ln">85   </span></a>
+<a name="l86"><span class="ln">86   </span></a>
+<a name="l87"><span class="ln">87   </span></a><span class="s0"># -------------------------------------------------------------------------------</span>
+<a name="l88"><span class="ln">88   </span></a><span class="s0"># LOCAL HELPERS:</span>
+<a name="l89"><span class="ln">89   </span></a><span class="s0"># -------------------------------------------------------------------------------</span>
+<a name="l90"><span class="ln">90   </span></a><span class="s3">def </span><span class="s1">iscoroutinefunction(func):</span>
+<a name="l91"><span class="ln">91   </span></a>    <span class="s2">&quot;&quot;&quot;Checks if a function is a coroutine-function, like: 
+<a name="l92"><span class="ln">92   </span></a> 
+<a name="l93"><span class="ln">93   </span></a>     * ``async def f(): ...`` (since Python 3.5) 
+<a name="l94"><span class="ln">94   </span></a>     * ``@asyncio.coroutine def f(): ...`` (since Python3) 
+<a name="l95"><span class="ln">95   </span></a> 
+<a name="l96"><span class="ln">96   </span></a>    .. note:: Compatibility helper 
+<a name="l97"><span class="ln">97   </span></a> 
+<a name="l98"><span class="ln">98   </span></a>        Avoids to import :mod:`asyncio` module directly (since Python3), 
+<a name="l99"><span class="ln">99   </span></a>        which in turns initializes the :mod:`logging` module as side-effect. 
+<a name="l100"><span class="ln">100  </span></a> 
+<a name="l101"><span class="ln">101  </span></a>    :param func:  Function to check. 
+<a name="l102"><span class="ln">102  </span></a>    :return: True, if function is a coroutine function. 
+<a name="l103"><span class="ln">103  </span></a>             False, otherwise. 
+<a name="l104"><span class="ln">104  </span></a>    &quot;&quot;&quot;</span>
+<a name="l105"><span class="ln">105  </span></a>    <span class="s0"># -- NOTE: inspect.iscoroutinefunction() is available since Python 3.5</span>
+<a name="l106"><span class="ln">106  </span></a>    <span class="s0">#    Checks also if @asyncio.coroutine decorator is not used.</span>
+<a name="l107"><span class="ln">107  </span></a>    <span class="s0"># pylint: disable=no-member</span>
+<a name="l108"><span class="ln">108  </span></a>    <span class="s3">return </span><span class="s1">(getattr(func</span><span class="s3">, </span><span class="s4">&quot;_is_coroutine&quot;</span><span class="s3">, False</span><span class="s1">) </span><span class="s3">or</span>
+<a name="l109"><span class="ln">109  </span></a>            <span class="s1">(hasattr(inspect</span><span class="s3">, </span><span class="s4">&quot;iscoroutinefunction&quot;</span><span class="s1">) </span><span class="s3">and</span>
+<a name="l110"><span class="ln">110  </span></a>             <span class="s1">inspect.iscoroutinefunction(func)))</span>
+<a name="l111"><span class="ln">111  </span></a>
+<a name="l112"><span class="ln">112  </span></a>
+<a name="l113"><span class="ln">113  </span></a><span class="s3">def </span><span class="s1">is_context_manager(func):</span>
+<a name="l114"><span class="ln">114  </span></a>    <span class="s2">&quot;&quot;&quot;Checks if a fixture function provides context-manager functionality, 
+<a name="l115"><span class="ln">115  </span></a>    similar to :func`contextlib.contextmanager()` function decorator. 
+<a name="l116"><span class="ln">116  </span></a> 
+<a name="l117"><span class="ln">117  </span></a>    .. code-block:: python 
+<a name="l118"><span class="ln">118  </span></a> 
+<a name="l119"><span class="ln">119  </span></a>        @fixture 
+<a name="l120"><span class="ln">120  </span></a>        def foo(context, *args, **kwargs): 
+<a name="l121"><span class="ln">121  </span></a>            context.foo = setup_foo() 
+<a name="l122"><span class="ln">122  </span></a>            yield context.foo 
+<a name="l123"><span class="ln">123  </span></a>            cleanup_foo() 
+<a name="l124"><span class="ln">124  </span></a> 
+<a name="l125"><span class="ln">125  </span></a>        @fixture 
+<a name="l126"><span class="ln">126  </span></a>        def bar(context, *args, **kwargs): 
+<a name="l127"><span class="ln">127  </span></a>            context.bar = setup_bar() 
+<a name="l128"><span class="ln">128  </span></a>            return context.bar 
+<a name="l129"><span class="ln">129  </span></a> 
+<a name="l130"><span class="ln">130  </span></a>        assert is_context_manager(foo) is True      # Generator-function 
+<a name="l131"><span class="ln">131  </span></a>        assert is_context_manager(bar) is False     # Normal function 
+<a name="l132"><span class="ln">132  </span></a> 
+<a name="l133"><span class="ln">133  </span></a>    :param func:    Function to check. 
+<a name="l134"><span class="ln">134  </span></a>    :return: True, if function is a generator/context-manager function. 
+<a name="l135"><span class="ln">135  </span></a>             False, otherwise. 
+<a name="l136"><span class="ln">136  </span></a>    &quot;&quot;&quot;</span>
+<a name="l137"><span class="ln">137  </span></a>    <span class="s1">genfunc = inspect.isgeneratorfunction(func)</span>
+<a name="l138"><span class="ln">138  </span></a>    <span class="s3">return </span><span class="s1">genfunc </span><span class="s3">and not </span><span class="s1">iscoroutinefunction(func)</span>
+<a name="l139"><span class="ln">139  </span></a>
+<a name="l140"><span class="ln">140  </span></a>
+<a name="l141"><span class="ln">141  </span></a><span class="s0"># -------------------------------------------------------------------------------</span>
+<a name="l142"><span class="ln">142  </span></a><span class="s0"># EXCEPTIONS:</span>
+<a name="l143"><span class="ln">143  </span></a><span class="s0"># -------------------------------------------------------------------------------</span>
+<a name="l144"><span class="ln">144  </span></a><span class="s3">class </span><span class="s1">InvalidFixtureError(RuntimeError):</span>
+<a name="l145"><span class="ln">145  </span></a>    <span class="s2">&quot;&quot;&quot;Raised when a fixture is invalid. 
+<a name="l146"><span class="ln">146  </span></a>    This occurs when a generator-function with more than one yield statement 
+<a name="l147"><span class="ln">147  </span></a>    is used as fixture-function. 
+<a name="l148"><span class="ln">148  </span></a>    &quot;&quot;&quot;</span>
+<a name="l149"><span class="ln">149  </span></a>
+<a name="l150"><span class="ln">150  </span></a>
+<a name="l151"><span class="ln">151  </span></a><span class="s0"># -------------------------------------------------------------------------------</span>
+<a name="l152"><span class="ln">152  </span></a><span class="s0"># FUNCTIONS: Fixture support</span>
+<a name="l153"><span class="ln">153  </span></a><span class="s0"># -------------------------------------------------------------------------------</span>
+<a name="l154"><span class="ln">154  </span></a><span class="s3">def </span><span class="s1">_setup_fixture(fixture_func</span><span class="s3">, </span><span class="s1">context</span><span class="s3">, </span><span class="s1">*fixture_args</span><span class="s3">, </span><span class="s1">**fixture_kwargs):</span>
+<a name="l155"><span class="ln">155  </span></a>    <span class="s2">&quot;&quot;&quot;Provides core functionality to setup a fixture and registers its 
+<a name="l156"><span class="ln">156  </span></a>    cleanup part (if needed). 
+<a name="l157"><span class="ln">157  </span></a>    &quot;&quot;&quot;</span>
+<a name="l158"><span class="ln">158  </span></a>    <span class="s3">if </span><span class="s1">is_context_manager(fixture_func):</span>
+<a name="l159"><span class="ln">159  </span></a>        <span class="s0"># -- CASE: Fixture function is a two-step generator (setup, cleanup).</span>
+<a name="l160"><span class="ln">160  </span></a>        <span class="s3">def </span><span class="s1">cleanup_fixture():</span>
+<a name="l161"><span class="ln">161  </span></a>            <span class="s3">try</span><span class="s1">:</span>
+<a name="l162"><span class="ln">162  </span></a>                <span class="s1">next(func_it)           </span><span class="s0"># CLEANUP-FIXTURE PART</span>
+<a name="l163"><span class="ln">163  </span></a>                <span class="s0"># -- USE func_it: From outer scope (here).</span>
+<a name="l164"><span class="ln">164  </span></a>            <span class="s3">except </span><span class="s1">StopIteration:</span>
+<a name="l165"><span class="ln">165  </span></a>                <span class="s3">return False</span>
+<a name="l166"><span class="ln">166  </span></a>            <span class="s0"># -- NOT-NEEDED:</span>
+<a name="l167"><span class="ln">167  </span></a>            <span class="s0"># except Exception:</span>
+<a name="l168"><span class="ln">168  </span></a>            <span class="s0">#    raise   # -- CLEANUP-FIXTURE PART raised an error.</span>
+<a name="l169"><span class="ln">169  </span></a>            <span class="s3">else</span><span class="s1">:</span>
+<a name="l170"><span class="ln">170  </span></a>                <span class="s1">message = </span><span class="s4">&quot;Has more than one yield: %r&quot; </span><span class="s1">% fixture_func</span>
+<a name="l171"><span class="ln">171  </span></a>                <span class="s3">raise </span><span class="s1">InvalidFixtureError(message)</span>
+<a name="l172"><span class="ln">172  </span></a>
+<a name="l173"><span class="ln">173  </span></a>        <span class="s0"># -- GENERATOR: Get instance via call and register cleanup.</span>
+<a name="l174"><span class="ln">174  </span></a>        <span class="s0">#  Then perform setup_fixture to ensure that cleanup_fixture()</span>
+<a name="l175"><span class="ln">175  </span></a>        <span class="s0">#  is called even if setup-error occurs.</span>
+<a name="l176"><span class="ln">176  </span></a>        <span class="s0">#  NOTE: cleanup_fixture() is called when context layer is removed.</span>
+<a name="l177"><span class="ln">177  </span></a>        <span class="s1">func_it = fixture_func(context</span><span class="s3">, </span><span class="s1">*fixture_args</span><span class="s3">, </span><span class="s1">**fixture_kwargs)</span>
+<a name="l178"><span class="ln">178  </span></a>        <span class="s1">context.add_cleanup(cleanup_fixture)</span>
+<a name="l179"><span class="ln">179  </span></a>        <span class="s1">setup_result = next(func_it) </span><span class="s0"># SETUP-FIXTURE PART (may raise error)</span>
+<a name="l180"><span class="ln">180  </span></a>    <span class="s3">else</span><span class="s1">:</span>
+<a name="l181"><span class="ln">181  </span></a>        <span class="s0"># -- CASE: Fixture is a simple function (setup-only)</span>
+<a name="l182"><span class="ln">182  </span></a>        <span class="s0"># NOTE: No cleanup is registered (not needed by intention of user)</span>
+<a name="l183"><span class="ln">183  </span></a>        <span class="s1">setup_result = fixture_func(context</span><span class="s3">, </span><span class="s1">*fixture_args</span><span class="s3">, </span><span class="s1">**fixture_kwargs)</span>
+<a name="l184"><span class="ln">184  </span></a>    <span class="s3">return </span><span class="s1">setup_result</span>
+<a name="l185"><span class="ln">185  </span></a>
+<a name="l186"><span class="ln">186  </span></a>
+<a name="l187"><span class="ln">187  </span></a><span class="s3">def </span><span class="s1">use_fixture(fixture_func</span><span class="s3">, </span><span class="s1">context</span><span class="s3">, </span><span class="s1">*fixture_args</span><span class="s3">, </span><span class="s1">**fixture_kwargs):</span>
+<a name="l188"><span class="ln">188  </span></a>    <span class="s2">&quot;&quot;&quot;Use fixture (function) and call it to perform its setup-part. 
+<a name="l189"><span class="ln">189  </span></a> 
+<a name="l190"><span class="ln">190  </span></a>    The fixture-function is similar to a :func:`contextlib.contextmanager` 
+<a name="l191"><span class="ln">191  </span></a>    (and contains a yield-statement to seperate setup and cleanup part). 
+<a name="l192"><span class="ln">192  </span></a>    If it contains a yield-statement, it registers a context-cleanup function 
+<a name="l193"><span class="ln">193  </span></a>    to the context object to perform the fixture-cleanup at the end of the 
+<a name="l194"><span class="ln">194  </span></a>    current scoped when the context layer is removed 
+<a name="l195"><span class="ln">195  </span></a>    (and all context-cleanup functions are called). 
+<a name="l196"><span class="ln">196  </span></a> 
+<a name="l197"><span class="ln">197  </span></a>    Therefore, fixture-cleanup is performed after scenario, feature or test-run 
+<a name="l198"><span class="ln">198  </span></a>    (depending when its fixture-setup is performed). 
+<a name="l199"><span class="ln">199  </span></a> 
+<a name="l200"><span class="ln">200  </span></a>    .. code-block:: python 
+<a name="l201"><span class="ln">201  </span></a> 
+<a name="l202"><span class="ln">202  </span></a>        # -- FILE: behave4my_project/fixtures.py (or: features/environment.py) 
+<a name="l203"><span class="ln">203  </span></a>        from behave import fixture 
+<a name="l204"><span class="ln">204  </span></a>        from somewhere.browser import FirefoxBrowser 
+<a name="l205"><span class="ln">205  </span></a> 
+<a name="l206"><span class="ln">206  </span></a>        @fixture(name=&quot;fixture.browser.firefox&quot;) 
+<a name="l207"><span class="ln">207  </span></a>        def browser_firefox(context, *args, **kwargs): 
+<a name="l208"><span class="ln">208  </span></a>            # -- SETUP-FIXTURE PART: 
+<a name="l209"><span class="ln">209  </span></a>            context.browser = FirefoxBrowser(*args, **kwargs) 
+<a name="l210"><span class="ln">210  </span></a>            yield context.browser 
+<a name="l211"><span class="ln">211  </span></a>            # -- CLEANUP-FIXTURE PART: 
+<a name="l212"><span class="ln">212  </span></a>            context.browser.shutdown() 
+<a name="l213"><span class="ln">213  </span></a> 
+<a name="l214"><span class="ln">214  </span></a>    .. code-block:: python 
+<a name="l215"><span class="ln">215  </span></a> 
+<a name="l216"><span class="ln">216  </span></a>        # -- FILE: features/environment.py 
+<a name="l217"><span class="ln">217  </span></a>        from behave import use_fixture 
+<a name="l218"><span class="ln">218  </span></a>        from behave4my_project.fixtures import browser_firefox 
+<a name="l219"><span class="ln">219  </span></a> 
+<a name="l220"><span class="ln">220  </span></a>        def before_tag(context, tag): 
+<a name="l221"><span class="ln">221  </span></a>            if tag == &quot;fixture.browser.firefox&quot;: 
+<a name="l222"><span class="ln">222  </span></a>                use_fixture(browser_firefox, context, timeout=10) 
+<a name="l223"><span class="ln">223  </span></a> 
+<a name="l224"><span class="ln">224  </span></a> 
+<a name="l225"><span class="ln">225  </span></a>    :param fixture_func: Fixture function to use. 
+<a name="l226"><span class="ln">226  </span></a>    :param context: Context object to use 
+<a name="l227"><span class="ln">227  </span></a>    :param fixture_kwargs: Positional args, passed to the fixture function. 
+<a name="l228"><span class="ln">228  </span></a>    :param fixture_kwargs: Additional kwargs, passed to the fixture function. 
+<a name="l229"><span class="ln">229  </span></a>    :return: Setup result object (may be None). 
+<a name="l230"><span class="ln">230  </span></a>    &quot;&quot;&quot;</span>
+<a name="l231"><span class="ln">231  </span></a>    <span class="s3">return </span><span class="s1">_setup_fixture(fixture_func</span><span class="s3">, </span><span class="s1">context</span><span class="s3">, </span><span class="s1">*fixture_args</span><span class="s3">, </span><span class="s1">**fixture_kwargs)</span>
+<a name="l232"><span class="ln">232  </span></a>
+<a name="l233"><span class="ln">233  </span></a>
+<a name="l234"><span class="ln">234  </span></a><span class="s3">def </span><span class="s1">use_fixture_by_tag(tag</span><span class="s3">, </span><span class="s1">context</span><span class="s3">, </span><span class="s1">fixture_registry):</span>
+<a name="l235"><span class="ln">235  </span></a>    <span class="s2">&quot;&quot;&quot;Process any fixture-tag to perform :func:`use_fixture()` for its fixture. 
+<a name="l236"><span class="ln">236  </span></a>    If the fixture-tag is known, the fixture data is retrieved from the 
+<a name="l237"><span class="ln">237  </span></a>    fixture registry. 
+<a name="l238"><span class="ln">238  </span></a> 
+<a name="l239"><span class="ln">239  </span></a>    .. code-block:: python 
+<a name="l240"><span class="ln">240  </span></a> 
+<a name="l241"><span class="ln">241  </span></a>        # -- FILE: features/environment.py 
+<a name="l242"><span class="ln">242  </span></a>        from behave.fixture import use_fixture_by_tag 
+<a name="l243"><span class="ln">243  </span></a>        from behave4my_project.fixtures import browser_firefox, browser_chrome 
+<a name="l244"><span class="ln">244  </span></a> 
+<a name="l245"><span class="ln">245  </span></a>        # -- SCHEMA 1: fixture_func 
+<a name="l246"><span class="ln">246  </span></a>        fixture_registry1 = { 
+<a name="l247"><span class="ln">247  </span></a>            &quot;fixture.browser.firefox&quot;: browser_firefox, 
+<a name="l248"><span class="ln">248  </span></a>            &quot;fixture.browser.chrome&quot;:  browser_chrome, 
+<a name="l249"><span class="ln">249  </span></a>        } 
+<a name="l250"><span class="ln">250  </span></a>        # -- SCHEMA 2: fixture_func, fixture_args, fixture_kwargs 
+<a name="l251"><span class="ln">251  </span></a>        fixture_registry2 = { 
+<a name="l252"><span class="ln">252  </span></a>            &quot;fixture.browser.firefox&quot;: (browser_firefox, (), dict(timeout=10)), 
+<a name="l253"><span class="ln">253  </span></a>            &quot;fixture.browser.chrome&quot;:  (browser_chrome,  (), dict(timeout=12)), 
+<a name="l254"><span class="ln">254  </span></a>        } 
+<a name="l255"><span class="ln">255  </span></a> 
+<a name="l256"><span class="ln">256  </span></a>        def before_tag(context, tag): 
+<a name="l257"><span class="ln">257  </span></a>            if tag.startswith(&quot;fixture.&quot;): 
+<a name="l258"><span class="ln">258  </span></a>                return use_fixture_by_tag(tag, context, fixture_registry1): 
+<a name="l259"><span class="ln">259  </span></a>            # -- MORE: Tag processing steps ... 
+<a name="l260"><span class="ln">260  </span></a> 
+<a name="l261"><span class="ln">261  </span></a> 
+<a name="l262"><span class="ln">262  </span></a>    :param tag:     Fixture tag to process. 
+<a name="l263"><span class="ln">263  </span></a>    :param context: Runtime context object, used for :func:`use_fixture()`. 
+<a name="l264"><span class="ln">264  </span></a>    :param fixture_registry:  Registry maps fixture-tag to fixture data. 
+<a name="l265"><span class="ln">265  </span></a>    :return: Fixture-setup result (same as: use_fixture()) 
+<a name="l266"><span class="ln">266  </span></a>    :raises LookupError: If fixture-tag/fixture is unknown. 
+<a name="l267"><span class="ln">267  </span></a>    :raises ValueError: If fixture data type is not supported. 
+<a name="l268"><span class="ln">268  </span></a>    &quot;&quot;&quot;</span>
+<a name="l269"><span class="ln">269  </span></a>    <span class="s1">fixture_data = fixture_registry.get(tag</span><span class="s3">, None</span><span class="s1">)</span>
+<a name="l270"><span class="ln">270  </span></a>    <span class="s3">if </span><span class="s1">fixture_data </span><span class="s3">is None</span><span class="s1">:</span>
+<a name="l271"><span class="ln">271  </span></a>        <span class="s3">raise </span><span class="s1">LookupError(</span><span class="s4">&quot;Unknown fixture-tag: %s&quot; </span><span class="s1">% tag)</span>
+<a name="l272"><span class="ln">272  </span></a>
+<a name="l273"><span class="ln">273  </span></a>    <span class="s3">if </span><span class="s1">callable(fixture_data):</span>
+<a name="l274"><span class="ln">274  </span></a>        <span class="s1">fixture_func = fixture_data</span>
+<a name="l275"><span class="ln">275  </span></a>        <span class="s1">use_fixture(fixture_func</span><span class="s3">, </span><span class="s1">context)</span>
+<a name="l276"><span class="ln">276  </span></a>    <span class="s3">elif </span><span class="s1">isinstance(fixture_data</span><span class="s3">, </span><span class="s1">(tuple</span><span class="s3">, </span><span class="s1">list)):</span>
+<a name="l277"><span class="ln">277  </span></a>        <span class="s3">assert </span><span class="s1">len(fixture_data) == </span><span class="s5">3</span>
+<a name="l278"><span class="ln">278  </span></a>        <span class="s1">fixture_func</span><span class="s3">, </span><span class="s1">fixture_args</span><span class="s3">, </span><span class="s1">fixture_kwargs = fixture_data</span>
+<a name="l279"><span class="ln">279  </span></a>        <span class="s3">return </span><span class="s1">use_fixture(fixture_func</span><span class="s3">, </span><span class="s1">context</span><span class="s3">, </span><span class="s1">*fixture_args</span><span class="s3">, </span><span class="s1">**fixture_kwargs)</span>
+<a name="l280"><span class="ln">280  </span></a>    <span class="s3">else</span><span class="s1">:</span>
+<a name="l281"><span class="ln">281  </span></a>        <span class="s1">message = </span><span class="s4">&quot;fixture_data: Expected tuple or fixture-func, but is: %r&quot;</span>
+<a name="l282"><span class="ln">282  </span></a>        <span class="s3">raise </span><span class="s1">ValueError(message % fixture_data)</span>
+<a name="l283"><span class="ln">283  </span></a>
+<a name="l284"><span class="ln">284  </span></a>
+<a name="l285"><span class="ln">285  </span></a><span class="s3">def </span><span class="s1">fixture_call_params(fixture_func</span><span class="s3">, </span><span class="s1">*args</span><span class="s3">, </span><span class="s1">**kwargs):</span>
+<a name="l286"><span class="ln">286  </span></a>    <span class="s0"># -- SEE: use_composite_fixture_with()</span>
+<a name="l287"><span class="ln">287  </span></a>    <span class="s3">return </span><span class="s1">(fixture_func</span><span class="s3">, </span><span class="s1">args</span><span class="s3">, </span><span class="s1">kwargs)</span>
+<a name="l288"><span class="ln">288  </span></a>
+<a name="l289"><span class="ln">289  </span></a>
+<a name="l290"><span class="ln">290  </span></a><span class="s3">def </span><span class="s1">use_composite_fixture_with(context</span><span class="s3">, </span><span class="s1">fixture_funcs_with_params):</span>
+<a name="l291"><span class="ln">291  </span></a>    <span class="s2">&quot;&quot;&quot;Helper function when complex fixtures should be created and 
+<a name="l292"><span class="ln">292  </span></a>    safe-cleanup is needed even if an setup-fixture-error occurs. 
+<a name="l293"><span class="ln">293  </span></a> 
+<a name="l294"><span class="ln">294  </span></a>    This function ensures that fixture-cleanup is performed 
+<a name="l295"><span class="ln">295  </span></a>    for every fixture that was setup before the setup-error occured. 
+<a name="l296"><span class="ln">296  </span></a> 
+<a name="l297"><span class="ln">297  </span></a>    .. code-block:: python 
+<a name="l298"><span class="ln">298  </span></a> 
+<a name="l299"><span class="ln">299  </span></a>        # -- BAD-EXAMPLE: Simplistic composite-fixture 
+<a name="l300"><span class="ln">300  </span></a>        # NOTE: Created fixtures (fixture1) are not cleaned up. 
+<a name="l301"><span class="ln">301  </span></a>        @fixture 
+<a name="l302"><span class="ln">302  </span></a>        def foo_and_bad0(context, *args, **kwargs): 
+<a name="l303"><span class="ln">303  </span></a>            the_fixture1 = setup_fixture_foo(*args, **kwargs) 
+<a name="l304"><span class="ln">304  </span></a>            the_fixture2 = setup_fixture_bar_with_error(&quot;OOPS-HERE&quot;) 
+<a name="l305"><span class="ln">305  </span></a>            yield (the_fixture1, the_fixture2)  # NOT_REACHED. 
+<a name="l306"><span class="ln">306  </span></a>            # -- NOT_REACHED: Due to fixture2-setup-error. 
+<a name="l307"><span class="ln">307  </span></a>            the_fixture1.cleanup()  # NOT-CALLED (SAD). 
+<a name="l308"><span class="ln">308  </span></a>            the_fixture2.cleanup()  # OOPS, the_fixture2 is None (if called). 
+<a name="l309"><span class="ln">309  </span></a> 
+<a name="l310"><span class="ln">310  </span></a>    .. code-block:: python 
+<a name="l311"><span class="ln">311  </span></a> 
+<a name="l312"><span class="ln">312  </span></a>        # -- GOOD-EXAMPLE: Sane composite-fixture 
+<a name="l313"><span class="ln">313  </span></a>        # NOTE: Fixture foo.cleanup() occurs even after fixture2-setup-error. 
+<a name="l314"><span class="ln">314  </span></a>        @fixture 
+<a name="l315"><span class="ln">315  </span></a>        def foo(context, *args, **kwargs): 
+<a name="l316"><span class="ln">316  </span></a>            the_fixture = setup_fixture_foo(*args, **kwargs) 
+<a name="l317"><span class="ln">317  </span></a>            yield the_fixture 
+<a name="l318"><span class="ln">318  </span></a>            cleanup_fixture_foo(the_fixture) 
+<a name="l319"><span class="ln">319  </span></a> 
+<a name="l320"><span class="ln">320  </span></a>        @fixture 
+<a name="l321"><span class="ln">321  </span></a>        def bad_with_setup_error(context, *args, **kwargs): 
+<a name="l322"><span class="ln">322  </span></a>            raise RuntimeError(&quot;BAD-FIXTURE-SETUP&quot;) 
+<a name="l323"><span class="ln">323  </span></a> 
+<a name="l324"><span class="ln">324  </span></a>        # -- SOLUTION 1: With use_fixture() 
+<a name="l325"><span class="ln">325  </span></a>        @fixture 
+<a name="l326"><span class="ln">326  </span></a>        def foo_and_bad1(context, *args, **kwargs): 
+<a name="l327"><span class="ln">327  </span></a>            the_fixture1 = use_fixture(foo, context, *args, **kwargs) 
+<a name="l328"><span class="ln">328  </span></a>            the_fixture2 = use_fixture(bad_with_setup_error, context, &quot;OOPS&quot;) 
+<a name="l329"><span class="ln">329  </span></a>            return (the_fixture1, the_fixture2) # NOT_REACHED 
+<a name="l330"><span class="ln">330  </span></a> 
+<a name="l331"><span class="ln">331  </span></a>        # -- SOLUTION 2: With use_composite_fixture_with() 
+<a name="l332"><span class="ln">332  </span></a>        @fixture 
+<a name="l333"><span class="ln">333  </span></a>        def foo_and_bad2(context, *args, **kwargs): 
+<a name="l334"><span class="ln">334  </span></a>            the_fixture = use_composite_fixture_with(context, [ 
+<a name="l335"><span class="ln">335  </span></a>                fixture_call_params(foo, *args, **kwargs), 
+<a name="l336"><span class="ln">336  </span></a>                fixture_call_params(bad_with_setup_error, &quot;OOPS&quot;) 
+<a name="l337"><span class="ln">337  </span></a>             ]) 
+<a name="l338"><span class="ln">338  </span></a>            return the_fixture 
+<a name="l339"><span class="ln">339  </span></a> 
+<a name="l340"><span class="ln">340  </span></a>    :param context:     Runtime context object, used for all fixtures. 
+<a name="l341"><span class="ln">341  </span></a>    :param fixture_funcs_with_params: List of fixture functions with params. 
+<a name="l342"><span class="ln">342  </span></a>    :return: List of created fixture objects. 
+<a name="l343"><span class="ln">343  </span></a>    &quot;&quot;&quot;</span>
+<a name="l344"><span class="ln">344  </span></a>    <span class="s1">composite_fixture = []</span>
+<a name="l345"><span class="ln">345  </span></a>    <span class="s3">for </span><span class="s1">fixture_func</span><span class="s3">, </span><span class="s1">args</span><span class="s3">, </span><span class="s1">kwargs </span><span class="s3">in </span><span class="s1">fixture_funcs_with_params:</span>
+<a name="l346"><span class="ln">346  </span></a>        <span class="s1">the_fixture = use_fixture(fixture_func</span><span class="s3">, </span><span class="s1">context</span><span class="s3">, </span><span class="s1">*args</span><span class="s3">, </span><span class="s1">**kwargs)</span>
+<a name="l347"><span class="ln">347  </span></a>        <span class="s1">composite_fixture.append(the_fixture)</span>
+<a name="l348"><span class="ln">348  </span></a>    <span class="s3">return </span><span class="s1">composite_fixture</span>
+<a name="l349"><span class="ln">349  </span></a>
+<a name="l350"><span class="ln">350  </span></a>
+<a name="l351"><span class="ln">351  </span></a>
+<a name="l352"><span class="ln">352  </span></a><span class="s0"># -------------------------------------------------------------------------------</span>
+<a name="l353"><span class="ln">353  </span></a><span class="s0"># DECORATORS:</span>
+<a name="l354"><span class="ln">354  </span></a><span class="s0"># -------------------------------------------------------------------------------</span>
+<a name="l355"><span class="ln">355  </span></a><span class="s3">def </span><span class="s1">fixture(func=</span><span class="s3">None, </span><span class="s1">name=</span><span class="s3">None, </span><span class="s1">pattern=</span><span class="s3">None</span><span class="s1">):</span>
+<a name="l356"><span class="ln">356  </span></a>    <span class="s2">&quot;&quot;&quot;Fixture decorator (currently mostly syntactic sugar). 
+<a name="l357"><span class="ln">357  </span></a> 
+<a name="l358"><span class="ln">358  </span></a>    .. code-block:: python 
+<a name="l359"><span class="ln">359  </span></a> 
+<a name="l360"><span class="ln">360  </span></a>        # -- FILE: features/environment.py 
+<a name="l361"><span class="ln">361  </span></a>        # CASE FIXTURE-GENERATOR-FUNCTION (like @contextlib.contextmanager): 
+<a name="l362"><span class="ln">362  </span></a>        @fixture 
+<a name="l363"><span class="ln">363  </span></a>        def foo(context, *args, **kwargs): 
+<a name="l364"><span class="ln">364  </span></a>            the_fixture = setup_fixture_foo(*args, **kwargs) 
+<a name="l365"><span class="ln">365  </span></a>            context.foo = the_fixture 
+<a name="l366"><span class="ln">366  </span></a>            yield the_fixture 
+<a name="l367"><span class="ln">367  </span></a>            cleanup_fixture_foo(the_fixture) 
+<a name="l368"><span class="ln">368  </span></a> 
+<a name="l369"><span class="ln">369  </span></a>        # CASE FIXTURE-FUNCTION: No cleanup or cleanup via context-cleanup. 
+<a name="l370"><span class="ln">370  </span></a>        @fixture(name=&quot;fixture.bar&quot;) 
+<a name="l371"><span class="ln">371  </span></a>        def bar(context, *args, **kwargs): 
+<a name="l372"><span class="ln">372  </span></a>            the_fixture = setup_fixture_bar(*args, **kwargs) 
+<a name="l373"><span class="ln">373  </span></a>            context.bar = the_fixture 
+<a name="l374"><span class="ln">374  </span></a>            context.add_cleanup(cleanup_fixture_bar, the_fixture.cleanup) 
+<a name="l375"><span class="ln">375  </span></a>            return the_fixture 
+<a name="l376"><span class="ln">376  </span></a> 
+<a name="l377"><span class="ln">377  </span></a>    :param name:    Specifies the fixture tag name (as string). 
+<a name="l378"><span class="ln">378  </span></a> 
+<a name="l379"><span class="ln">379  </span></a>    .. seealso:: 
+<a name="l380"><span class="ln">380  </span></a> 
+<a name="l381"><span class="ln">381  </span></a>        * :func:`contextlib.contextmanager` decorator 
+<a name="l382"><span class="ln">382  </span></a>        * `@pytest.fixture`_ 
+<a name="l383"><span class="ln">383  </span></a>    &quot;&quot;&quot;</span>
+<a name="l384"><span class="ln">384  </span></a>    <span class="s3">def </span><span class="s1">mark_as_fixture(func</span><span class="s3">, </span><span class="s1">name=</span><span class="s3">None, </span><span class="s1">pattern=</span><span class="s3">None</span><span class="s1">):</span>
+<a name="l385"><span class="ln">385  </span></a>        <span class="s1">func.name = name</span>
+<a name="l386"><span class="ln">386  </span></a>        <span class="s1">func.pattern = pattern</span>
+<a name="l387"><span class="ln">387  </span></a>        <span class="s1">func.behave_fixture = </span><span class="s3">True</span>
+<a name="l388"><span class="ln">388  </span></a>        <span class="s3">return </span><span class="s1">func</span>
+<a name="l389"><span class="ln">389  </span></a>
+<a name="l390"><span class="ln">390  </span></a>    <span class="s3">if </span><span class="s1">func </span><span class="s3">is None</span><span class="s1">:</span>
+<a name="l391"><span class="ln">391  </span></a>        <span class="s0"># CASE: @fixture()</span>
+<a name="l392"><span class="ln">392  </span></a>        <span class="s0"># CASE: @fixture(name=&quot;foo&quot;)</span>
+<a name="l393"><span class="ln">393  </span></a>        <span class="s3">def </span><span class="s1">decorator(func):</span>
+<a name="l394"><span class="ln">394  </span></a>            <span class="s3">return </span><span class="s1">mark_as_fixture(func</span><span class="s3">, </span><span class="s1">name</span><span class="s3">, </span><span class="s1">pattern=pattern)</span>
+<a name="l395"><span class="ln">395  </span></a>        <span class="s3">return </span><span class="s1">decorator</span>
+<a name="l396"><span class="ln">396  </span></a>    <span class="s3">elif </span><span class="s1">callable(func):</span>
+<a name="l397"><span class="ln">397  </span></a>        <span class="s0"># CASE: @fixture</span>
+<a name="l398"><span class="ln">398  </span></a>        <span class="s3">return </span><span class="s1">mark_as_fixture(func</span><span class="s3">, </span><span class="s1">name</span><span class="s3">, </span><span class="s1">pattern=pattern)</span>
+<a name="l399"><span class="ln">399  </span></a>    <span class="s3">else</span><span class="s1">:</span>
+<a name="l400"><span class="ln">400  </span></a>        <span class="s0"># -- OOPS: Should be callable-object or None</span>
+<a name="l401"><span class="ln">401  </span></a>        <span class="s1">message = </span><span class="s4">&quot;Invalid func: func=%r, name=%r&quot; </span><span class="s1">% (func</span><span class="s3">, </span><span class="s1">name)</span>
+<a name="l402"><span class="ln">402  </span></a>        <span class="s3">raise </span><span class="s1">TypeError(message)</span>
+<a name="l403"><span class="ln">403  </span></a></pre>
+</body>
+</html>

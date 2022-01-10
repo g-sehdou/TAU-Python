@@ -1,0 +1,59 @@
+<html>
+<head>
+<title>arg and keywoord arg.py</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #629755; font-style: italic;}
+.s1 { color: #a9b7c6;}
+.s2 { color: #cc7832;}
+.s3 { color: #6a8759;}
+.s4 { color: #6897bb;}
+.ln { color: #606366; font-weight: normal; font-style: normal; }
+</style>
+</head>
+<body bgcolor="#2b2b2b">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+arg and keywoord arg.py</font>
+</center></td></tr></table>
+<pre><a name="l1"><span class="ln">1    </span></a><span class="s0">&quot;&quot;&quot; 
+<a name="l2"><span class="ln">2    </span></a>We'll just make a simple function to explore how argument and keyword arguments work. 
+<a name="l3"><span class="ln">3    </span></a>- The following function prints name, age and city from arguments provided to the function 
+<a name="l4"><span class="ln">4    </span></a>&quot;&quot;&quot;</span>
+<a name="l5"><span class="ln">5    </span></a>
+<a name="l6"><span class="ln">6    </span></a>
+<a name="l7"><span class="ln">7    </span></a><span class="s2">def </span><span class="s1">user_info(name</span><span class="s2">, </span><span class="s1">age</span><span class="s2">, </span><span class="s1">city):</span>
+<a name="l8"><span class="ln">8    </span></a>    <span class="s1">print(</span><span class="s3">&quot;{} is {} years old and lives in {}&quot;</span><span class="s1">.format(name</span><span class="s2">, </span><span class="s1">age</span><span class="s2">, </span><span class="s1">city))</span>
+<a name="l9"><span class="ln">9    </span></a>
+<a name="l10"><span class="ln">10   </span></a>
+<a name="l11"><span class="ln">11   </span></a><span class="s1">user_info(</span><span class="s3">&quot;Gabi Sehdou&quot;</span><span class="s2">, </span><span class="s4">40</span><span class="s2">, </span><span class="s3">&quot;Rotterdam&quot;</span><span class="s1">)</span>
+<a name="l12"><span class="ln">12   </span></a>
+<a name="l13"><span class="ln">13   </span></a><span class="s3">&quot;&quot;&quot; 
+<a name="l14"><span class="ln">14   </span></a>- The following function is missing one arg.  
+<a name="l15"><span class="ln">15   </span></a>&quot;&quot;&quot;</span>
+<a name="l16"><span class="ln">16   </span></a>
+<a name="l17"><span class="ln">17   </span></a><span class="s3">&quot;&quot;&quot; 
+<a name="l18"><span class="ln">18   </span></a>def user_info_missing_one_arg(name, age, city): 
+<a name="l19"><span class="ln">19   </span></a>    print(&quot;{} is {} years old and lives in {}&quot;.format(name, age, city)) 
+<a name="l20"><span class="ln">20   </span></a> 
+<a name="l21"><span class="ln">21   </span></a> 
+<a name="l22"><span class="ln">22   </span></a>user_info_missing_one_arg(40, &quot;Amsterdam&quot;) 
+<a name="l23"><span class="ln">23   </span></a>&quot;&quot;&quot;</span>
+<a name="l24"><span class="ln">24   </span></a>
+<a name="l25"><span class="ln">25   </span></a><span class="s3">&quot;&quot;&quot; 
+<a name="l26"><span class="ln">26   </span></a>Using Keyword argument will solve the problem in the previous example when there is an argument is undefined. 
+<a name="l27"><span class="ln">27   </span></a>This will be solved by defining a default value into the function. Meaning, calling the function without 
+<a name="l28"><span class="ln">28   </span></a>providing all arguments, the default argument's value will be applied. In case providing all needed argument's value 
+<a name="l29"><span class="ln">29   </span></a>these will override the default argument's value 
+<a name="l30"><span class="ln">30   </span></a>&quot;&quot;&quot;</span>
+<a name="l31"><span class="ln">31   </span></a>
+<a name="l32"><span class="ln">32   </span></a>
+<a name="l33"><span class="ln">33   </span></a><span class="s2">def </span><span class="s1">keyword_arg_solves_positional_arg(name=</span><span class="s3">&quot;Mark Twin&quot;</span><span class="s2">, </span><span class="s1">age=</span><span class="s4">0</span><span class="s2">, </span><span class="s1">city=</span><span class="s3">&quot; No City is defined so this is default&quot;</span><span class="s1">):</span>
+<a name="l34"><span class="ln">34   </span></a>    <span class="s1">print(</span><span class="s3">&quot;{} is {} year old and lives in {}&quot;</span><span class="s1">.format(name</span><span class="s2">, </span><span class="s1">age</span><span class="s2">, </span><span class="s1">city))</span>
+<a name="l35"><span class="ln">35   </span></a>
+<a name="l36"><span class="ln">36   </span></a>
+<a name="l37"><span class="ln">37   </span></a><span class="s1">keyword_arg_solves_positional_arg(age=</span><span class="s4">80</span><span class="s2">, </span><span class="s1">name=</span><span class="s3">&quot;John&quot;</span><span class="s1">)</span>
+<a name="l38"><span class="ln">38   </span></a></pre>
+</body>
+</html>

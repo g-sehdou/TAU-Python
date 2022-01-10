@@ -1,0 +1,101 @@
+<html>
+<head>
+<title>lists.py</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #629755; font-style: italic;}
+.s1 { color: #a9b7c6;}
+.s2 { color: #808080;}
+.s3 { color: #6a8759;}
+.s4 { color: #cc7832;}
+.s5 { color: #6897bb;}
+.ln { color: #606366; font-weight: normal; font-style: normal; }
+</style>
+</head>
+<body bgcolor="#2b2b2b">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+lists.py</font>
+</center></td></tr></table>
+<pre><a name="l1"><span class="ln">1    </span></a><span class="s0">&quot;&quot;&quot; 
+<a name="l2"><span class="ln">2    </span></a>In this example you will learn about lists in Python. 
+<a name="l3"><span class="ln">3    </span></a>The items in a Python list can be of any data type and the items contained in a list can even be other lists, dictionaries, sets, tuples, or any mixture of Python data. 
+<a name="l4"><span class="ln">4    </span></a> 
+<a name="l5"><span class="ln">5    </span></a>Lists are mutable, which means that the item inside of a list can be retrieved, changed, rearranged, and acted upon in multiple different ways. 
+<a name="l6"><span class="ln">6    </span></a> 
+<a name="l7"><span class="ln">7    </span></a>Python lists maintain their order, which means that you can access something by its position or index using some of the list methods available in Python. 
+<a name="l8"><span class="ln">8    </span></a> 
+<a name="l9"><span class="ln">9    </span></a>In this exercise, we will create several lists and we will use the Python list methods to interact with the list. 
+<a name="l10"><span class="ln">10   </span></a>&quot;&quot;&quot;</span>
+<a name="l11"><span class="ln">11   </span></a><span class="s2"># making a simple list which is cars</span>
+<a name="l12"><span class="ln">12   </span></a>
+<a name="l13"><span class="ln">13   </span></a>
+<a name="l14"><span class="ln">14   </span></a><span class="s1">cars = [</span><span class="s3">&quot;Opel&quot;</span><span class="s4">, </span><span class="s3">&quot;Mercedes&quot;</span><span class="s4">, </span><span class="s3">&quot;BMW&quot;</span><span class="s4">, </span><span class="s3">&quot;Porsche&quot;</span><span class="s1">]</span>
+<a name="l15"><span class="ln">15   </span></a><span class="s1">print(cars)</span>
+<a name="l16"><span class="ln">16   </span></a>
+<a name="l17"><span class="ln">17   </span></a>
+<a name="l18"><span class="ln">18   </span></a><span class="s1">techno = [</span><span class="s3">&quot;Java&quot;</span><span class="s4">, </span><span class="s3">&quot;Python&quot;</span><span class="s4">, </span><span class="s3">&quot;C++&quot;</span><span class="s1">]</span>
+<a name="l19"><span class="ln">19   </span></a><span class="s1">print(techno)</span>
+<a name="l20"><span class="ln">20   </span></a>
+<a name="l21"><span class="ln">21   </span></a>
+<a name="l22"><span class="ln">22   </span></a><span class="s1">years = [</span><span class="s3">&quot;twenty&quot;</span><span class="s4">, </span><span class="s5">10</span><span class="s4">, </span><span class="s3">&quot; fifty&quot;</span><span class="s4">, </span><span class="s5">1901</span><span class="s4">, </span><span class="s5">2021</span><span class="s1">]</span>
+<a name="l23"><span class="ln">23   </span></a><span class="s1">print(years)</span>
+<a name="l24"><span class="ln">24   </span></a>
+<a name="l25"><span class="ln">25   </span></a><span class="s2"># append method is used to add a list with an item</span>
+<a name="l26"><span class="ln">26   </span></a>
+<a name="l27"><span class="ln">27   </span></a><span class="s1">language = [</span><span class="s3">&quot;Arabic&quot;</span><span class="s4">, </span><span class="s3">&quot;English&quot;</span><span class="s4">, </span><span class="s3">&quot;Dutch&quot;</span><span class="s1">]</span>
+<a name="l28"><span class="ln">28   </span></a><span class="s1">language.append(</span><span class="s3">&quot;France&quot;</span><span class="s1">)</span>
+<a name="l29"><span class="ln">29   </span></a><span class="s1">print(language)</span>
+<a name="l30"><span class="ln">30   </span></a><span class="s1">print(language</span><span class="s4">, </span><span class="s1">cars</span><span class="s4">, </span><span class="s1">years</span><span class="s4">, </span><span class="s1">techno)</span>
+<a name="l31"><span class="ln">31   </span></a>
+<a name="l32"><span class="ln">32   </span></a>
+<a name="l33"><span class="ln">33   </span></a><span class="s2"># extend method is allowed us to extend a list with another list</span>
+<a name="l34"><span class="ln">34   </span></a>
+<a name="l35"><span class="ln">35   </span></a><span class="s1">euro_countries = [</span><span class="s3">&quot;Germany&quot;</span><span class="s4">, </span><span class="s3">&quot;Italy&quot;</span><span class="s4">, </span><span class="s3">&quot;Spain&quot;</span><span class="s1">]</span>
+<a name="l36"><span class="ln">36   </span></a><span class="s1">countries = [</span><span class="s3">&quot;The Netherlands&quot;</span><span class="s4">, </span><span class="s3">&quot;Belgium&quot;</span><span class="s4">, </span><span class="s3">&quot;Greece&quot;</span><span class="s1">]</span>
+<a name="l37"><span class="ln">37   </span></a><span class="s1">countries.extend(euro_countries)</span>
+<a name="l38"><span class="ln">38   </span></a><span class="s1">print(countries)</span>
+<a name="l39"><span class="ln">39   </span></a>
+<a name="l40"><span class="ln">40   </span></a><span class="s2"># remove method allows us to move an item from a list</span>
+<a name="l41"><span class="ln">41   </span></a>
+<a name="l42"><span class="ln">42   </span></a><span class="s1">mobile = [</span><span class="s3">&quot;apple&quot;</span><span class="s4">, </span><span class="s3">&quot;samsung&quot;</span><span class="s4">, </span><span class="s3">&quot;nokia&quot;</span><span class="s4">, </span><span class="s3">&quot;ericsson&quot;</span><span class="s4">, </span><span class="s3">&quot;Blackberry&quot;</span><span class="s1">]</span>
+<a name="l43"><span class="ln">43   </span></a><span class="s1">mobile.remove(</span><span class="s3">&quot;nokia&quot;</span><span class="s1">)</span>
+<a name="l44"><span class="ln">44   </span></a><span class="s1">print(mobile)</span>
+<a name="l45"><span class="ln">45   </span></a>
+<a name="l46"><span class="ln">46   </span></a><span class="s2"># pop method allows us to move an item from a list by index</span>
+<a name="l47"><span class="ln">47   </span></a>
+<a name="l48"><span class="ln">48   </span></a><span class="s1">soft_drinks = [</span><span class="s3">&quot;orange&quot;</span><span class="s4">, </span><span class="s3">&quot;apple&quot;</span><span class="s4">, </span><span class="s3">&quot;cola&quot;</span><span class="s4">, </span><span class="s3">&quot;redbull&quot;</span><span class="s1">]</span>
+<a name="l49"><span class="ln">49   </span></a><span class="s1">print(soft_drinks)</span>
+<a name="l50"><span class="ln">50   </span></a><span class="s2"># using 0 will remove the first item from the list</span>
+<a name="l51"><span class="ln">51   </span></a><span class="s1">soft_drinks.pop(</span><span class="s5">0</span><span class="s1">)</span>
+<a name="l52"><span class="ln">52   </span></a><span class="s1">print(soft_drinks)</span>
+<a name="l53"><span class="ln">53   </span></a><span class="s2"># using negative number e.g. -1  will remove the last item from the list</span>
+<a name="l54"><span class="ln">54   </span></a><span class="s1">soft_drinks.pop(-</span><span class="s5">1</span><span class="s1">)</span>
+<a name="l55"><span class="ln">55   </span></a><span class="s1">print(soft_drinks)</span>
+<a name="l56"><span class="ln">56   </span></a>
+<a name="l57"><span class="ln">57   </span></a><span class="s2"># sort method will allows us to sort items (not string items)</span>
+<a name="l58"><span class="ln">58   </span></a>
+<a name="l59"><span class="ln">59   </span></a><span class="s1">salaris = [</span><span class="s5">200</span><span class="s4">, </span><span class="s5">494</span><span class="s4">, </span><span class="s5">34.39</span><span class="s4">, </span><span class="s5">3948937</span><span class="s4">, </span><span class="s5">3.0003</span><span class="s1">]</span>
+<a name="l60"><span class="ln">60   </span></a><span class="s1">print(salaris)</span>
+<a name="l61"><span class="ln">61   </span></a><span class="s1">salaris.sort()</span>
+<a name="l62"><span class="ln">62   </span></a><span class="s1">print(salaris)</span>
+<a name="l63"><span class="ln">63   </span></a>
+<a name="l64"><span class="ln">64   </span></a><span class="s2"># Python has a function called &quot;in&quot; which allows us to check membership in a list. it returns False Or True</span>
+<a name="l65"><span class="ln">65   </span></a>
+<a name="l66"><span class="ln">66   </span></a><span class="s1">workers = [</span><span class="s3">&quot;George&quot;</span><span class="s4">, </span><span class="s3">&quot;Hans&quot;</span><span class="s4">, </span><span class="s3">&quot;Jan&quot;</span><span class="s4">, </span><span class="s3">&quot;Greg&quot;</span><span class="s4">, </span><span class="s3">&quot;Mark&quot;</span><span class="s1">]</span>
+<a name="l67"><span class="ln">67   </span></a><span class="s2"># it will return False because &quot;jan&quot; is not a member of the list workers</span>
+<a name="l68"><span class="ln">68   </span></a><span class="s1">print(</span><span class="s3">&quot;jan&quot; </span><span class="s4">in </span><span class="s1">workers)</span>
+<a name="l69"><span class="ln">69   </span></a><span class="s2"># it will return True because &quot;George&quot; is a member of the list workers</span>
+<a name="l70"><span class="ln">70   </span></a><span class="s1">print(</span><span class="s3">&quot;George&quot; </span><span class="s4">in </span><span class="s1">workers)</span>
+<a name="l71"><span class="ln">71   </span></a>
+<a name="l72"><span class="ln">72   </span></a><span class="s2"># Python has function called count which allows us to count the same items in a list</span>
+<a name="l73"><span class="ln">73   </span></a>
+<a name="l74"><span class="ln">74   </span></a><span class="s1">tickets = [</span><span class="s3">&quot;fly&quot;</span><span class="s4">, </span><span class="s3">&quot;fly&quot;</span><span class="s4">, </span><span class="s3">&quot;car&quot;</span><span class="s4">, </span><span class="s3">&quot;plan&quot;</span><span class="s4">, </span><span class="s3">&quot;film&quot;</span><span class="s4">, </span><span class="s3">&quot;car&quot;</span><span class="s4">, </span><span class="s3">&quot;film&quot;</span><span class="s4">, </span><span class="s3">&quot;fly&quot;</span><span class="s1">]</span>
+<a name="l75"><span class="ln">75   </span></a><span class="s1">print(tickets.count(</span><span class="s3">&quot;film&quot;</span><span class="s1">))</span>
+<a name="l76"><span class="ln">76   </span></a><span class="s2"># this will show you in which position appears the item in the list</span>
+<a name="l77"><span class="ln">77   </span></a><span class="s1">print(tickets.index(</span><span class="s3">&quot;car&quot;</span><span class="s1">))</span>
+<a name="l78"><span class="ln">78   </span></a>
+<a name="l79"><span class="ln">79   </span></a></pre>
+</body>
+</html>

@@ -1,0 +1,46 @@
+<html>
+<head>
+<title>combining arg types.py</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #629755; font-style: italic;}
+.s1 { color: #a9b7c6;}
+.s2 { color: #cc7832;}
+.s3 { color: #6a8759;}
+.s4 { color: #6897bb;}
+.ln { color: #606366; font-weight: normal; font-style: normal; }
+</style>
+</head>
+<body bgcolor="#2b2b2b">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+combining arg types.py</font>
+</center></td></tr></table>
+<pre><a name="l1"><span class="ln">1    </span></a><span class="s0">&quot;&quot;&quot; 
+<a name="l2"><span class="ln">2    </span></a>######Important##### 
+<a name="l3"><span class="ln">3    </span></a>In this example will demonstrates the combining of *arg and ** kwargs. 
+<a name="l4"><span class="ln">4    </span></a>*args: Allows for unlimited variables to be passed into a function without defining them ahead of time. 
+<a name="l5"><span class="ln">5    </span></a>example: 
+<a name="l6"><span class="ln">6    </span></a>def add(*args): 
+<a name="l7"><span class="ln">7    </span></a>    print(sum(args)) 
+<a name="l8"><span class="ln">8    </span></a>add(2,4,7) 
+<a name="l9"><span class="ln">9    </span></a>add(3,5,234,100) 
+<a name="l10"><span class="ln">10   </span></a> 
+<a name="l11"><span class="ln">11   </span></a>**kwargs: Allows for unlimited keyword arguments to be passed into a functions without defining them ahead of time. 
+<a name="l12"><span class="ln">12   </span></a>example: 
+<a name="l13"><span class="ln">13   </span></a>def application(**kwargs): 
+<a name="l14"><span class="ln">14   </span></a>    print(**kwargs) 
+<a name="l15"><span class="ln">15   </span></a>application(name=&quot;Python&quot;, age=30, email= &quot;info@python.com&quot;) 
+<a name="l16"><span class="ln">16   </span></a>application(salaris= 2000, &quot;Engineer&quot;) 
+<a name="l17"><span class="ln">17   </span></a>&quot;&quot;&quot;</span>
+<a name="l18"><span class="ln">18   </span></a>
+<a name="l19"><span class="ln">19   </span></a>
+<a name="l20"><span class="ln">20   </span></a><span class="s2">def </span><span class="s1">application_for_job(fname</span><span class="s2">, </span><span class="s1">lname</span><span class="s2">, </span><span class="s1">address</span><span class="s2">, </span><span class="s1">education</span><span class="s2">, </span><span class="s1">*args</span><span class="s2">, </span><span class="s1">**kwargs):</span>
+<a name="l21"><span class="ln">21   </span></a>    <span class="s1">print(</span><span class="s3">&quot;{} {} lives at {} studied {} and looking for a job with salaris as high as {} for {} &quot;</span><span class="s1">.format(fname</span><span class="s2">, </span><span class="s1">lname</span><span class="s2">, </span><span class="s1">address</span><span class="s2">, </span><span class="s1">education</span><span class="s2">, </span><span class="s1">*args</span><span class="s2">, </span><span class="s1">**kwargs))</span>
+<a name="l22"><span class="ln">22   </span></a>
+<a name="l23"><span class="ln">23   </span></a>
+<a name="l24"><span class="ln">24   </span></a><span class="s1">application_for_job(</span><span class="s3">&quot;Tony&quot;</span><span class="s2">, </span><span class="s3">&quot;Marcus&quot;</span><span class="s2">, </span><span class="s3">&quot;Longstreet 10&quot;</span><span class="s2">, </span><span class="s3">&quot;IT Engineer&quot;</span><span class="s2">, </span><span class="s4">3500</span><span class="s2">, </span><span class="s3">&quot;Python Programmer&quot;</span><span class="s1">)</span>
+<a name="l25"><span class="ln">25   </span></a></pre>
+</body>
+</html>

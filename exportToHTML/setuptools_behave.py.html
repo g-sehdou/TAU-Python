@@ -1,0 +1,153 @@
+<html>
+<head>
+<title>setuptools_behave.py</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #808080;}
+.s1 { color: #a9b7c6;}
+.s2 { color: #629755; font-style: italic;}
+.s3 { color: #cc7832;}
+.s4 { color: #6a8759;}
+.s5 { color: #6897bb;}
+.ln { color: #606366; font-weight: normal; font-style: normal; }
+</style>
+</head>
+<body bgcolor="#2b2b2b">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+setuptools_behave.py</font>
+</center></td></tr></table>
+<pre><a name="l1"><span class="ln">1    </span></a><span class="s0">#!/usr/bin/env python</span>
+<a name="l2"><span class="ln">2    </span></a><span class="s0"># -*- coding: utf-8 -*-</span>
+<a name="l3"><span class="ln">3    </span></a><span class="s2">&quot;&quot;&quot; 
+<a name="l4"><span class="ln">4    </span></a>Setuptools command for behave. 
+<a name="l5"><span class="ln">5    </span></a> 
+<a name="l6"><span class="ln">6    </span></a>.. code-block:: console 
+<a name="l7"><span class="ln">7    </span></a> 
+<a name="l8"><span class="ln">8    </span></a>    python setup.py behave_test 
+<a name="l9"><span class="ln">9    </span></a>    python setup.py behave_test --format=progress3 
+<a name="l10"><span class="ln">10   </span></a>    python setup.py behave_test --args=features/one.feature 
+<a name="l11"><span class="ln">11   </span></a>    python setup.py behave_test --tags=-xfail --args=features 
+<a name="l12"><span class="ln">12   </span></a> 
+<a name="l13"><span class="ln">13   </span></a>.. seealso:: 
+<a name="l14"><span class="ln">14   </span></a> 
+<a name="l15"><span class="ln">15   </span></a>    * http://pypi.python.org/pypi/behave 
+<a name="l16"><span class="ln">16   </span></a>    * http://github.com/behave/behave 
+<a name="l17"><span class="ln">17   </span></a>&quot;&quot;&quot;</span>
+<a name="l18"><span class="ln">18   </span></a>
+<a name="l19"><span class="ln">19   </span></a><span class="s3">from </span><span class="s1">setuptools </span><span class="s3">import </span><span class="s1">Command</span>
+<a name="l20"><span class="ln">20   </span></a><span class="s3">from </span><span class="s1">distutils </span><span class="s3">import </span><span class="s1">dir_util</span>
+<a name="l21"><span class="ln">21   </span></a><span class="s3">from </span><span class="s1">fnmatch </span><span class="s3">import </span><span class="s1">fnmatch</span>
+<a name="l22"><span class="ln">22   </span></a><span class="s3">import </span><span class="s1">os.path</span>
+<a name="l23"><span class="ln">23   </span></a><span class="s3">import </span><span class="s1">sys</span>
+<a name="l24"><span class="ln">24   </span></a><span class="s3">import </span><span class="s1">shlex</span>
+<a name="l25"><span class="ln">25   </span></a><span class="s3">import </span><span class="s1">subprocess</span>
+<a name="l26"><span class="ln">26   </span></a>
+<a name="l27"><span class="ln">27   </span></a>
+<a name="l28"><span class="ln">28   </span></a><span class="s3">class </span><span class="s1">behave_test(Command):</span>
+<a name="l29"><span class="ln">29   </span></a>    <span class="s2">&quot;&quot;&quot; 
+<a name="l30"><span class="ln">30   </span></a>    Simple test runner that runs 'behave' via a &quot;setup.py&quot; file. 
+<a name="l31"><span class="ln">31   </span></a>    This ensures that all requirements are provided before the tests are run. 
+<a name="l32"><span class="ln">32   </span></a>    &quot;&quot;&quot;</span>
+<a name="l33"><span class="ln">33   </span></a>    <span class="s1">command_name = </span><span class="s4">&quot;behave_test&quot;</span>
+<a name="l34"><span class="ln">34   </span></a>    <span class="s1">description = </span><span class="s4">&quot;Run feature tests with behave&quot;</span>
+<a name="l35"><span class="ln">35   </span></a>    <span class="s1">default_format = </span><span class="s4">&quot;progress&quot;</span>
+<a name="l36"><span class="ln">36   </span></a>    <span class="s1">default_args   = </span><span class="s4">&quot;features&quot;</span>
+<a name="l37"><span class="ln">37   </span></a>    <span class="s1">local_egg_dir  = </span><span class="s4">&quot;.eggs&quot;</span>
+<a name="l38"><span class="ln">38   </span></a>    <span class="s1">command_consumes_arguments = </span><span class="s3">False</span>
+<a name="l39"><span class="ln">39   </span></a>    <span class="s1">user_options = [</span>
+<a name="l40"><span class="ln">40   </span></a>        <span class="s1">(</span><span class="s4">&quot;format=&quot;</span><span class="s3">, </span><span class="s4">&quot;f&quot;</span><span class="s3">, </span><span class="s4">&quot;Use formatter (default: %s)&quot; </span><span class="s1">% default_format)</span><span class="s3">,</span>
+<a name="l41"><span class="ln">41   </span></a>        <span class="s1">(</span><span class="s4">&quot;tags=&quot;</span><span class="s3">,   </span><span class="s4">&quot;t&quot;</span><span class="s3">, </span><span class="s4">&quot;Use tags to select/exclude features/scenarios&quot;</span><span class="s1">)</span><span class="s3">,</span>
+<a name="l42"><span class="ln">42   </span></a>        <span class="s1">(</span><span class="s4">&quot;dry-run&quot;</span><span class="s3">, </span><span class="s4">&quot;d&quot;</span><span class="s3">, </span><span class="s4">&quot;Use dry-run mode&quot;</span><span class="s1">)</span><span class="s3">,</span>
+<a name="l43"><span class="ln">43   </span></a>        <span class="s1">(</span><span class="s4">&quot;args=&quot;</span><span class="s3">, None,</span>
+<a name="l44"><span class="ln">44   </span></a>            <span class="s4">&quot;Features to run (default: %s)&quot; </span><span class="s1">% default_args)</span><span class="s3">,</span>
+<a name="l45"><span class="ln">45   </span></a>    <span class="s1">]</span>
+<a name="l46"><span class="ln">46   </span></a>    <span class="s1">boolean_options = [ </span><span class="s4">&quot;dry-run&quot; </span><span class="s1">]</span>
+<a name="l47"><span class="ln">47   </span></a>
+<a name="l48"><span class="ln">48   </span></a>    <span class="s3">def </span><span class="s1">initialize_options(self):</span>
+<a name="l49"><span class="ln">49   </span></a>        <span class="s1">self.format = self.default_format</span>
+<a name="l50"><span class="ln">50   </span></a>        <span class="s1">self.tags = </span><span class="s3">None</span>
+<a name="l51"><span class="ln">51   </span></a>        <span class="s1">self.dry_run = </span><span class="s3">None</span>
+<a name="l52"><span class="ln">52   </span></a>        <span class="s1">self.args = self.default_args</span>
+<a name="l53"><span class="ln">53   </span></a>
+<a name="l54"><span class="ln">54   </span></a>    <span class="s3">def </span><span class="s1">finalize_options(self):</span>
+<a name="l55"><span class="ln">55   </span></a>        <span class="s1">self.ensure_string(</span><span class="s4">&quot;format&quot;</span><span class="s3">, </span><span class="s1">self.default_format)</span>
+<a name="l56"><span class="ln">56   </span></a>        <span class="s1">self.ensure_string_list_with_comma_words(</span><span class="s4">&quot;tags&quot;</span><span class="s1">)</span>
+<a name="l57"><span class="ln">57   </span></a>        <span class="s1">self.ensure_string_list(</span><span class="s4">&quot;args&quot;</span><span class="s1">)</span>
+<a name="l58"><span class="ln">58   </span></a>
+<a name="l59"><span class="ln">59   </span></a>    <span class="s3">def </span><span class="s1">ensure_string_list_with_comma_words(self</span><span class="s3">, </span><span class="s1">option):</span>
+<a name="l60"><span class="ln">60   </span></a>        <span class="s2">&quot;&quot;&quot;Ensures that a string with whitespace separated words 
+<a name="l61"><span class="ln">61   </span></a>        is converted into list of strings. 
+<a name="l62"><span class="ln">62   </span></a>        Note that commas are allowed in words 
+<a name="l63"><span class="ln">63   </span></a>        (compared :meth:`ensure_string_list()`). 
+<a name="l64"><span class="ln">64   </span></a>        &quot;&quot;&quot;</span>
+<a name="l65"><span class="ln">65   </span></a>        <span class="s1">value = getattr(self</span><span class="s3">, </span><span class="s1">option</span><span class="s3">, None</span><span class="s1">)</span>
+<a name="l66"><span class="ln">66   </span></a>        <span class="s3">if not </span><span class="s1">value:</span>
+<a name="l67"><span class="ln">67   </span></a>            <span class="s3">return</span>
+<a name="l68"><span class="ln">68   </span></a>        <span class="s1">parts = shlex.split(value)</span>
+<a name="l69"><span class="ln">69   </span></a>        <span class="s1">setattr(self</span><span class="s3">, </span><span class="s1">option</span><span class="s3">, </span><span class="s1">parts)</span>
+<a name="l70"><span class="ln">70   </span></a>
+<a name="l71"><span class="ln">71   </span></a>    <span class="s3">def </span><span class="s1">_ensure_required_packages_are_installed(self</span><span class="s3">, </span><span class="s1">install_dir=</span><span class="s4">&quot;.&quot;</span><span class="s1">):</span>
+<a name="l72"><span class="ln">72   </span></a>        <span class="s0"># -- NOTE: Packages are downloaded and provided as local eggs.</span>
+<a name="l73"><span class="ln">73   </span></a>        <span class="s1">self.announce(</span><span class="s4">&quot;ensure_required_packages_are_installed&quot;</span><span class="s1">)</span>
+<a name="l74"><span class="ln">74   </span></a>        <span class="s1">initial_dir = os.getcwd()</span>
+<a name="l75"><span class="ln">75   </span></a>        <span class="s3">try</span><span class="s1">:</span>
+<a name="l76"><span class="ln">76   </span></a>            <span class="s1">dir_util.mkpath(install_dir)</span>
+<a name="l77"><span class="ln">77   </span></a>            <span class="s0"># -- NO LONGER NEEDED: os.chdir(self.local_egg_dir)</span>
+<a name="l78"><span class="ln">78   </span></a>            <span class="s3">if </span><span class="s1">self.distribution.install_requires:</span>
+<a name="l79"><span class="ln">79   </span></a>                <span class="s1">self.distribution.fetch_build_eggs(self.distribution.install_requires)</span>
+<a name="l80"><span class="ln">80   </span></a>            <span class="s3">if </span><span class="s1">self.distribution.tests_require:</span>
+<a name="l81"><span class="ln">81   </span></a>                <span class="s1">self.distribution.fetch_build_eggs(self.distribution.tests_require)</span>
+<a name="l82"><span class="ln">82   </span></a>        <span class="s3">finally</span><span class="s1">:</span>
+<a name="l83"><span class="ln">83   </span></a>            <span class="s1">os.chdir(initial_dir)</span>
+<a name="l84"><span class="ln">84   </span></a>
+<a name="l85"><span class="ln">85   </span></a>    <span class="s3">def </span><span class="s1">_select_paths(self</span><span class="s3">, </span><span class="s1">path=</span><span class="s4">&quot;.&quot;</span><span class="s3">, </span><span class="s1">pattern=</span><span class="s4">&quot;*&quot;</span><span class="s1">):</span>
+<a name="l86"><span class="ln">86   </span></a>        <span class="s1">selected = [ os.path.join(path</span><span class="s3">, </span><span class="s1">f)</span>
+<a name="l87"><span class="ln">87   </span></a>                     <span class="s3">for </span><span class="s1">f </span><span class="s3">in </span><span class="s1">os.listdir(path)  </span><span class="s3">if </span><span class="s1">fnmatch(f</span><span class="s3">, </span><span class="s1">pattern)]</span>
+<a name="l88"><span class="ln">88   </span></a>        <span class="s3">return </span><span class="s1">selected</span>
+<a name="l89"><span class="ln">89   </span></a>
+<a name="l90"><span class="ln">90   </span></a>    <span class="s3">def </span><span class="s1">_setup_env_with_local_python_path(self</span><span class="s3">, </span><span class="s1">egg_install_dir):</span>
+<a name="l91"><span class="ln">91   </span></a>        <span class="s1">PYTHONPATH = os.environ.get(</span><span class="s4">&quot;PYTHONPATH&quot;</span><span class="s3">, </span><span class="s4">&quot;&quot;</span><span class="s1">)</span>
+<a name="l92"><span class="ln">92   </span></a>        <span class="s1">pathsep = os.pathsep</span>
+<a name="l93"><span class="ln">93   </span></a>        <span class="s1">PPATH=[x </span><span class="s3">for </span><span class="s1">x </span><span class="s3">in </span><span class="s1">PYTHONPATH.split(pathsep) </span><span class="s3">if </span><span class="s1">x]</span>
+<a name="l94"><span class="ln">94   </span></a>        <span class="s1">PPATH.insert(</span><span class="s5">0</span><span class="s3">, </span><span class="s1">os.getcwd())</span>
+<a name="l95"><span class="ln">95   </span></a>        <span class="s1">local_eggs = self._select_paths(egg_install_dir</span><span class="s3">, </span><span class="s4">&quot;*.egg&quot;</span><span class="s1">)</span>
+<a name="l96"><span class="ln">96   </span></a>        <span class="s3">if </span><span class="s1">local_eggs:</span>
+<a name="l97"><span class="ln">97   </span></a>            <span class="s1">PPATH[</span><span class="s5">1</span><span class="s1">:</span><span class="s5">1</span><span class="s1">] = [ os.path.abspath(p) </span><span class="s3">for </span><span class="s1">p </span><span class="s3">in </span><span class="s1">local_eggs]</span>
+<a name="l98"><span class="ln">98   </span></a>        <span class="s1">os.environ[</span><span class="s4">&quot;PYTHONPATH&quot;</span><span class="s1">] = pathsep.join(PPATH)</span>
+<a name="l99"><span class="ln">99   </span></a>        <span class="s1">self.announce(</span><span class="s4">&quot;Use PYTHONPATH=%s&quot; </span><span class="s1">% os.environ[</span><span class="s4">&quot;PYTHONPATH&quot;</span><span class="s1">]</span><span class="s3">, </span><span class="s1">level=</span><span class="s5">3</span><span class="s1">)</span>
+<a name="l100"><span class="ln">100  </span></a>        <span class="s3">return </span><span class="s1">PYTHONPATH</span>
+<a name="l101"><span class="ln">101  </span></a>
+<a name="l102"><span class="ln">102  </span></a>    <span class="s3">def </span><span class="s1">run(self):</span>
+<a name="l103"><span class="ln">103  </span></a>        <span class="s0"># -- UPDATE SEARCHPATH: Ensure that local dir and local eggs are used.</span>
+<a name="l104"><span class="ln">104  </span></a>        <span class="s1">egg_install_dir = self.local_egg_dir</span>
+<a name="l105"><span class="ln">105  </span></a>        <span class="s1">self._ensure_required_packages_are_installed(egg_install_dir)</span>
+<a name="l106"><span class="ln">106  </span></a>        <span class="s1">OLD_PYTHONPATH = self._setup_env_with_local_python_path(egg_install_dir)</span>
+<a name="l107"><span class="ln">107  </span></a>        <span class="s3">for </span><span class="s1">path </span><span class="s3">in </span><span class="s1">self.args:</span>
+<a name="l108"><span class="ln">108  </span></a>            <span class="s1">returncode = self.behave(path)</span>
+<a name="l109"><span class="ln">109  </span></a>            <span class="s3">if </span><span class="s1">returncode:</span>
+<a name="l110"><span class="ln">110  </span></a>                <span class="s1">self.announce(</span><span class="s4">&quot;FAILED&quot;</span><span class="s3">, </span><span class="s1">level=</span><span class="s5">4</span><span class="s1">)</span>
+<a name="l111"><span class="ln">111  </span></a>                <span class="s3">raise </span><span class="s1">SystemExit(returncode)</span>
+<a name="l112"><span class="ln">112  </span></a>        <span class="s0"># -- FINALLY: Restore</span>
+<a name="l113"><span class="ln">113  </span></a>        <span class="s1">os.environ[</span><span class="s4">&quot;PYTHONPATH&quot;</span><span class="s1">] = OLD_PYTHONPATH</span>
+<a name="l114"><span class="ln">114  </span></a>        <span class="s3">return </span><span class="s1">returncode</span>
+<a name="l115"><span class="ln">115  </span></a>
+<a name="l116"><span class="ln">116  </span></a>    <span class="s3">def </span><span class="s1">behave(self</span><span class="s3">, </span><span class="s1">path):</span>
+<a name="l117"><span class="ln">117  </span></a>        <span class="s1">behave = os.path.join(</span><span class="s4">&quot;bin&quot;</span><span class="s3">, </span><span class="s4">&quot;behave&quot;</span><span class="s1">)</span>
+<a name="l118"><span class="ln">118  </span></a>        <span class="s3">if not </span><span class="s1">os.path.exists(behave):</span>
+<a name="l119"><span class="ln">119  </span></a>            <span class="s0"># -- ALTERNATIVE: USE: behave script: behave = &quot;behave&quot;</span>
+<a name="l120"><span class="ln">120  </span></a>            <span class="s0"># -- USE: behave module (main)</span>
+<a name="l121"><span class="ln">121  </span></a>            <span class="s1">behave = </span><span class="s4">&quot;-m behave&quot;</span>
+<a name="l122"><span class="ln">122  </span></a>        <span class="s1">cmd_options = </span><span class="s4">&quot;&quot;</span>
+<a name="l123"><span class="ln">123  </span></a>        <span class="s3">if </span><span class="s1">self.tags:</span>
+<a name="l124"><span class="ln">124  </span></a>            <span class="s1">cmd_options = </span><span class="s4">&quot;--tags=&quot; </span><span class="s1">+ </span><span class="s4">&quot; --tags=&quot;</span><span class="s1">.join(self.tags)</span>
+<a name="l125"><span class="ln">125  </span></a>        <span class="s3">if </span><span class="s1">self.dry_run:</span>
+<a name="l126"><span class="ln">126  </span></a>            <span class="s1">cmd_options += </span><span class="s4">&quot; --dry-run&quot;</span>
+<a name="l127"><span class="ln">127  </span></a>        <span class="s1">cmd_options += </span><span class="s4">&quot; --format=%s %s&quot; </span><span class="s1">% (self.format</span><span class="s3">, </span><span class="s1">path)</span>
+<a name="l128"><span class="ln">128  </span></a>        <span class="s1">self.announce(</span><span class="s4">&quot;CMDLINE: python %s %s&quot; </span><span class="s1">% (behave</span><span class="s3">, </span><span class="s1">cmd_options)</span><span class="s3">, </span><span class="s1">level=</span><span class="s5">3</span><span class="s1">)</span>
+<a name="l129"><span class="ln">129  </span></a>        <span class="s1">behave_cmd = shlex.split(behave)</span>
+<a name="l130"><span class="ln">130  </span></a>        <span class="s3">return </span><span class="s1">subprocess.call([sys.executable] + behave_cmd + shlex.split(cmd_options))</span>
+<a name="l131"><span class="ln">131  </span></a></pre>
+</body>
+</html>

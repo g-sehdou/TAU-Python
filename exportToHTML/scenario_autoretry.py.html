@@ -1,0 +1,96 @@
+<html>
+<head>
+<title>scenario_autoretry.py</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #808080;}
+.s1 { color: #a9b7c6;}
+.s2 { color: #629755; font-style: italic;}
+.s3 { color: #cc7832;}
+.s4 { color: #6897bb;}
+.s5 { color: #6a8759;}
+.ln { color: #606366; font-weight: normal; font-style: normal; }
+</style>
+</head>
+<body bgcolor="#2b2b2b">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+scenario_autoretry.py</font>
+</center></td></tr></table>
+<pre><a name="l1"><span class="ln">1    </span></a><span class="s0"># -*- coding: UTF -*-</span>
+<a name="l2"><span class="ln">2    </span></a><span class="s0"># pylint: disable=line-too-long</span>
+<a name="l3"><span class="ln">3    </span></a><span class="s2">&quot;&quot;&quot; 
+<a name="l4"><span class="ln">4    </span></a>Provides support functionality to retry scenarios a number of times before 
+<a name="l5"><span class="ln">5    </span></a>their failure is accepted. This functionality can be helpful when you use 
+<a name="l6"><span class="ln">6    </span></a>behave tests in a unreliable server/network infrastructure. 
+<a name="l7"><span class="ln">7    </span></a> 
+<a name="l8"><span class="ln">8    </span></a>EXAMPLE: 
+<a name="l9"><span class="ln">9    </span></a> 
+<a name="l10"><span class="ln">10   </span></a>.. sourcecode:: gherkin 
+<a name="l11"><span class="ln">11   </span></a> 
+<a name="l12"><span class="ln">12   </span></a>    # -- FILE: features/alice.feature 
+<a name="l13"><span class="ln">13   </span></a>    # TAG:  Feature or Scenario/ScenarioOutline with @autoretry 
+<a name="l14"><span class="ln">14   </span></a>    # NOTE: If you tag the feature, all its scenarios are retried. 
+<a name="l15"><span class="ln">15   </span></a>    @autoretry 
+<a name="l16"><span class="ln">16   </span></a>    Feature: Use unreliable Server infrastructure 
+<a name="l17"><span class="ln">17   </span></a> 
+<a name="l18"><span class="ln">18   </span></a>        Scenario: ... 
+<a name="l19"><span class="ln">19   </span></a> 
+<a name="l20"><span class="ln">20   </span></a> 
+<a name="l21"><span class="ln">21   </span></a>.. sourcecode:: python 
+<a name="l22"><span class="ln">22   </span></a> 
+<a name="l23"><span class="ln">23   </span></a>    # -- FILE: features/environment.py 
+<a name="l24"><span class="ln">24   </span></a>    from behave.contrib.scenario_autoretry import patch_scenario_with_autoretry 
+<a name="l25"><span class="ln">25   </span></a> 
+<a name="l26"><span class="ln">26   </span></a>    def before_feature(context, feature): 
+<a name="l27"><span class="ln">27   </span></a>        for scenario in feature.scenarios: 
+<a name="l28"><span class="ln">28   </span></a>            if &quot;autoretry&quot; in scenario.effective_tags: 
+<a name="l29"><span class="ln">29   </span></a>                patch_scenario_with_autoretry(scenario, max_attempts=2) 
+<a name="l30"><span class="ln">30   </span></a> 
+<a name="l31"><span class="ln">31   </span></a>.. seealso:: 
+<a name="l32"><span class="ln">32   </span></a>    * https://github.com/behave/behave/pull/328 
+<a name="l33"><span class="ln">33   </span></a>    * https://github.com/hypothesis/smokey/blob/sauce-reliability/smokey/features/environment.py 
+<a name="l34"><span class="ln">34   </span></a>&quot;&quot;&quot;</span>
+<a name="l35"><span class="ln">35   </span></a>
+<a name="l36"><span class="ln">36   </span></a><span class="s3">from </span><span class="s1">__future__ </span><span class="s3">import </span><span class="s1">print_function</span>
+<a name="l37"><span class="ln">37   </span></a><span class="s3">import </span><span class="s1">functools</span>
+<a name="l38"><span class="ln">38   </span></a><span class="s3">from </span><span class="s1">behave.model </span><span class="s3">import </span><span class="s1">ScenarioOutline</span>
+<a name="l39"><span class="ln">39   </span></a>
+<a name="l40"><span class="ln">40   </span></a>
+<a name="l41"><span class="ln">41   </span></a><span class="s3">def </span><span class="s1">patch_scenario_with_autoretry(scenario</span><span class="s3">, </span><span class="s1">max_attempts=</span><span class="s4">3</span><span class="s1">):</span>
+<a name="l42"><span class="ln">42   </span></a>    <span class="s2">&quot;&quot;&quot;Monkey-patches :func:`~behave.model.Scenario.run()` to auto-retry a 
+<a name="l43"><span class="ln">43   </span></a>    scenario that fails. The scenario is retried a number of times 
+<a name="l44"><span class="ln">44   </span></a>    before its failure is accepted. 
+<a name="l45"><span class="ln">45   </span></a> 
+<a name="l46"><span class="ln">46   </span></a>    This is helpful when the test infrastructure (server/network environment) 
+<a name="l47"><span class="ln">47   </span></a>    is unreliable (which should be a rare case). 
+<a name="l48"><span class="ln">48   </span></a> 
+<a name="l49"><span class="ln">49   </span></a>    :param scenario:        Scenario or ScenarioOutline to patch. 
+<a name="l50"><span class="ln">50   </span></a>    :param max_attempts:    How many times the scenario can be run. 
+<a name="l51"><span class="ln">51   </span></a>    &quot;&quot;&quot;</span>
+<a name="l52"><span class="ln">52   </span></a>    <span class="s3">def </span><span class="s1">scenario_run_with_retries(scenario_run</span><span class="s3">, </span><span class="s1">*args</span><span class="s3">, </span><span class="s1">**kwargs):</span>
+<a name="l53"><span class="ln">53   </span></a>        <span class="s3">for </span><span class="s1">attempt </span><span class="s3">in </span><span class="s1">range(</span><span class="s4">1</span><span class="s3">, </span><span class="s1">max_attempts+</span><span class="s4">1</span><span class="s1">):</span>
+<a name="l54"><span class="ln">54   </span></a>            <span class="s3">if not </span><span class="s1">scenario_run(*args</span><span class="s3">, </span><span class="s1">**kwargs):</span>
+<a name="l55"><span class="ln">55   </span></a>                <span class="s3">if </span><span class="s1">attempt &gt; </span><span class="s4">1</span><span class="s1">:</span>
+<a name="l56"><span class="ln">56   </span></a>                    <span class="s1">message = </span><span class="s5">u&quot;AUTO-RETRY SCENARIO PASSED (after {0} attempts)&quot;</span>
+<a name="l57"><span class="ln">57   </span></a>                    <span class="s1">print(message.format(attempt))</span>
+<a name="l58"><span class="ln">58   </span></a>                <span class="s3">return False    </span><span class="s0"># -- NOT-FAILED = PASSED</span>
+<a name="l59"><span class="ln">59   </span></a>            <span class="s0"># -- SCENARIO FAILED:</span>
+<a name="l60"><span class="ln">60   </span></a>            <span class="s3">if </span><span class="s1">attempt &lt; max_attempts:</span>
+<a name="l61"><span class="ln">61   </span></a>                <span class="s1">print(</span><span class="s5">u&quot;AUTO-RETRY SCENARIO (attempt {0})&quot;</span><span class="s1">.format(attempt))</span>
+<a name="l62"><span class="ln">62   </span></a>        <span class="s1">message = </span><span class="s5">u&quot;AUTO-RETRY SCENARIO FAILED (after {0} attempts)&quot;</span>
+<a name="l63"><span class="ln">63   </span></a>        <span class="s1">print(message.format(max_attempts))</span>
+<a name="l64"><span class="ln">64   </span></a>        <span class="s3">return True</span>
+<a name="l65"><span class="ln">65   </span></a>
+<a name="l66"><span class="ln">66   </span></a>    <span class="s3">if </span><span class="s1">isinstance(scenario</span><span class="s3">, </span><span class="s1">ScenarioOutline):</span>
+<a name="l67"><span class="ln">67   </span></a>        <span class="s1">scenario_outline = scenario</span>
+<a name="l68"><span class="ln">68   </span></a>        <span class="s3">for </span><span class="s1">scenario </span><span class="s3">in </span><span class="s1">scenario_outline.scenarios:</span>
+<a name="l69"><span class="ln">69   </span></a>            <span class="s1">scenario_run = scenario.run</span>
+<a name="l70"><span class="ln">70   </span></a>            <span class="s1">scenario.run = functools.partial(scenario_run_with_retries</span><span class="s3">, </span><span class="s1">scenario_run)</span>
+<a name="l71"><span class="ln">71   </span></a>    <span class="s3">else</span><span class="s1">:</span>
+<a name="l72"><span class="ln">72   </span></a>        <span class="s1">scenario_run = scenario.run</span>
+<a name="l73"><span class="ln">73   </span></a>        <span class="s1">scenario.run = functools.partial(scenario_run_with_retries</span><span class="s3">, </span><span class="s1">scenario_run)</span>
+<a name="l74"><span class="ln">74   </span></a></pre>
+</body>
+</html>

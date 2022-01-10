@@ -1,0 +1,72 @@
+<html>
+<head>
+<title>cmdexec.py</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #cc7832;}
+.s1 { color: #a9b7c6;}
+.s2 { color: #629755; font-style: italic;}
+.s3 { color: #6897bb;}
+.s4 { color: #808080;}
+.s5 { color: #6a8759;}
+.ln { color: #606366; font-weight: normal; font-style: normal; }
+</style>
+</head>
+<body bgcolor="#2b2b2b">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+cmdexec.py</font>
+</center></td></tr></table>
+<pre><a name="l1"><span class="ln">1    </span></a><span class="s0">import </span><span class="s1">sys</span>
+<a name="l2"><span class="ln">2    </span></a><span class="s0">import </span><span class="s1">subprocess</span>
+<a name="l3"><span class="ln">3    </span></a><span class="s0">import </span><span class="s1">py</span>
+<a name="l4"><span class="ln">4    </span></a><span class="s0">from </span><span class="s1">subprocess </span><span class="s0">import </span><span class="s1">Popen</span><span class="s0">, </span><span class="s1">PIPE</span>
+<a name="l5"><span class="ln">5    </span></a>
+<a name="l6"><span class="ln">6    </span></a><span class="s0">def </span><span class="s1">cmdexec(cmd):</span>
+<a name="l7"><span class="ln">7    </span></a>    <span class="s2">&quot;&quot;&quot; return unicode output of executing 'cmd' in a separate process. 
+<a name="l8"><span class="ln">8    </span></a> 
+<a name="l9"><span class="ln">9    </span></a>    raise cmdexec.Error exeception if the command failed. 
+<a name="l10"><span class="ln">10   </span></a>    the exception will provide an 'err' attribute containing 
+<a name="l11"><span class="ln">11   </span></a>    the error-output from the command. 
+<a name="l12"><span class="ln">12   </span></a>    if the subprocess module does not provide a proper encoding/unicode strings 
+<a name="l13"><span class="ln">13   </span></a>    sys.getdefaultencoding() will be used, if that does not exist, 'UTF-8'. 
+<a name="l14"><span class="ln">14   </span></a>    &quot;&quot;&quot;</span>
+<a name="l15"><span class="ln">15   </span></a>    <span class="s1">process = subprocess.Popen(cmd</span><span class="s0">, </span><span class="s1">shell=</span><span class="s0">True,</span>
+<a name="l16"><span class="ln">16   </span></a>            <span class="s1">universal_newlines=</span><span class="s0">True,</span>
+<a name="l17"><span class="ln">17   </span></a>            <span class="s1">stdout=subprocess.PIPE</span><span class="s0">, </span><span class="s1">stderr=subprocess.PIPE)</span>
+<a name="l18"><span class="ln">18   </span></a>    <span class="s1">out</span><span class="s0">, </span><span class="s1">err = process.communicate()</span>
+<a name="l19"><span class="ln">19   </span></a>    <span class="s0">if </span><span class="s1">sys.version_info[</span><span class="s3">0</span><span class="s1">] &lt; </span><span class="s3">3</span><span class="s1">: </span><span class="s4"># on py3 we get unicode strings, on py2 not</span>
+<a name="l20"><span class="ln">20   </span></a>        <span class="s0">try</span><span class="s1">:</span>
+<a name="l21"><span class="ln">21   </span></a>            <span class="s1">default_encoding = sys.getdefaultencoding() </span><span class="s4"># jython may not have it</span>
+<a name="l22"><span class="ln">22   </span></a>        <span class="s0">except </span><span class="s1">AttributeError:</span>
+<a name="l23"><span class="ln">23   </span></a>            <span class="s1">default_encoding = sys.stdout.encoding </span><span class="s0">or </span><span class="s5">'UTF-8'</span>
+<a name="l24"><span class="ln">24   </span></a>        <span class="s1">out = unicode(out</span><span class="s0">, </span><span class="s1">process.stdout.encoding </span><span class="s0">or </span><span class="s1">default_encoding)</span>
+<a name="l25"><span class="ln">25   </span></a>        <span class="s1">err = unicode(err</span><span class="s0">, </span><span class="s1">process.stderr.encoding </span><span class="s0">or </span><span class="s1">default_encoding)</span>
+<a name="l26"><span class="ln">26   </span></a>    <span class="s1">status = process.poll()</span>
+<a name="l27"><span class="ln">27   </span></a>    <span class="s0">if </span><span class="s1">status:</span>
+<a name="l28"><span class="ln">28   </span></a>        <span class="s0">raise </span><span class="s1">ExecutionFailed(status</span><span class="s0">, </span><span class="s1">status</span><span class="s0">, </span><span class="s1">cmd</span><span class="s0">, </span><span class="s1">out</span><span class="s0">, </span><span class="s1">err)</span>
+<a name="l29"><span class="ln">29   </span></a>    <span class="s0">return </span><span class="s1">out</span>
+<a name="l30"><span class="ln">30   </span></a>
+<a name="l31"><span class="ln">31   </span></a><span class="s0">class </span><span class="s1">ExecutionFailed(py.error.Error):</span>
+<a name="l32"><span class="ln">32   </span></a>    <span class="s0">def </span><span class="s1">__init__(self</span><span class="s0">, </span><span class="s1">status</span><span class="s0">, </span><span class="s1">systemstatus</span><span class="s0">, </span><span class="s1">cmd</span><span class="s0">, </span><span class="s1">out</span><span class="s0">, </span><span class="s1">err):</span>
+<a name="l33"><span class="ln">33   </span></a>        <span class="s1">Exception.__init__(self)</span>
+<a name="l34"><span class="ln">34   </span></a>        <span class="s1">self.status = status</span>
+<a name="l35"><span class="ln">35   </span></a>        <span class="s1">self.systemstatus = systemstatus</span>
+<a name="l36"><span class="ln">36   </span></a>        <span class="s1">self.cmd = cmd</span>
+<a name="l37"><span class="ln">37   </span></a>        <span class="s1">self.err = err</span>
+<a name="l38"><span class="ln">38   </span></a>        <span class="s1">self.out = out</span>
+<a name="l39"><span class="ln">39   </span></a>
+<a name="l40"><span class="ln">40   </span></a>    <span class="s0">def </span><span class="s1">__str__(self):</span>
+<a name="l41"><span class="ln">41   </span></a>        <span class="s0">return </span><span class="s5">&quot;ExecutionFailed: %d  %s</span><span class="s0">\n</span><span class="s5">%s&quot; </span><span class="s1">%(self.status</span><span class="s0">, </span><span class="s1">self.cmd</span><span class="s0">, </span><span class="s1">self.err)</span>
+<a name="l42"><span class="ln">42   </span></a>
+<a name="l43"><span class="ln">43   </span></a><span class="s4"># export the exception under the name 'py.process.cmdexec.Error'</span>
+<a name="l44"><span class="ln">44   </span></a><span class="s1">cmdexec.Error = ExecutionFailed</span>
+<a name="l45"><span class="ln">45   </span></a><span class="s0">try</span><span class="s1">:</span>
+<a name="l46"><span class="ln">46   </span></a>    <span class="s1">ExecutionFailed.__module__ = </span><span class="s5">'py.process.cmdexec'</span>
+<a name="l47"><span class="ln">47   </span></a>    <span class="s1">ExecutionFailed.__name__ = </span><span class="s5">'Error'</span>
+<a name="l48"><span class="ln">48   </span></a><span class="s0">except </span><span class="s1">(AttributeError</span><span class="s0">, </span><span class="s1">TypeError):</span>
+<a name="l49"><span class="ln">49   </span></a>    <span class="s0">pass</span>
+<a name="l50"><span class="ln">50   </span></a></pre>
+</body>
+</html>

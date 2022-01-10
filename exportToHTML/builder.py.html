@@ -1,0 +1,335 @@
+<html>
+<head>
+<title>builder.py</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #808080;}
+.s1 { color: #a9b7c6;}
+.s2 { color: #629755; font-style: italic;}
+.s3 { color: #cc7832;}
+.s4 { color: #6a8759;}
+.s5 { color: #6897bb;}
+.ln { color: #606366; font-weight: normal; font-style: normal; }
+</style>
+</head>
+<body bgcolor="#2b2b2b">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+builder.py</font>
+</center></td></tr></table>
+<pre><a name="l1"><span class="ln">1    </span></a><span class="s0"># -*- coding: utf-8 -*-</span>
+<a name="l2"><span class="ln">2    </span></a><span class="s0"># pylint: disable=missing-docstring</span>
+<a name="l3"><span class="ln">3    </span></a><span class="s2">r&quot;&quot;&quot; 
+<a name="l4"><span class="ln">4    </span></a>Provides support to compose user-defined parse types. 
+<a name="l5"><span class="ln">5    </span></a> 
+<a name="l6"><span class="ln">6    </span></a>Cardinality 
+<a name="l7"><span class="ln">7    </span></a>------------ 
+<a name="l8"><span class="ln">8    </span></a> 
+<a name="l9"><span class="ln">9    </span></a>It is often useful to constrain how often a data type occurs. 
+<a name="l10"><span class="ln">10   </span></a>This is also called the cardinality of a data type (in a context). 
+<a name="l11"><span class="ln">11   </span></a>The supported cardinality are: 
+<a name="l12"><span class="ln">12   </span></a> 
+<a name="l13"><span class="ln">13   </span></a>  * 0..1  zero_or_one,  optional&lt;T&gt;: T or None 
+<a name="l14"><span class="ln">14   </span></a>  * 0..N  zero_or_more, list_of&lt;T&gt; 
+<a name="l15"><span class="ln">15   </span></a>  * 1..N  one_or_more,  list_of&lt;T&gt; (many) 
+<a name="l16"><span class="ln">16   </span></a> 
+<a name="l17"><span class="ln">17   </span></a> 
+<a name="l18"><span class="ln">18   </span></a>.. doctest:: cardinality 
+<a name="l19"><span class="ln">19   </span></a> 
+<a name="l20"><span class="ln">20   </span></a>    &gt;&gt;&gt; from parse_type import TypeBuilder 
+<a name="l21"><span class="ln">21   </span></a>    &gt;&gt;&gt; from parse import Parser 
+<a name="l22"><span class="ln">22   </span></a> 
+<a name="l23"><span class="ln">23   </span></a>    &gt;&gt;&gt; def parse_number(text): 
+<a name="l24"><span class="ln">24   </span></a>    ...     return int(text) 
+<a name="l25"><span class="ln">25   </span></a>    &gt;&gt;&gt; parse_number.pattern = r&quot;\d+&quot; 
+<a name="l26"><span class="ln">26   </span></a> 
+<a name="l27"><span class="ln">27   </span></a>    &gt;&gt;&gt; parse_many_numbers = TypeBuilder.with_many(parse_number) 
+<a name="l28"><span class="ln">28   </span></a>    &gt;&gt;&gt; more_types = { &quot;Numbers&quot;: parse_many_numbers } 
+<a name="l29"><span class="ln">29   </span></a>    &gt;&gt;&gt; parser = Parser(&quot;List: {numbers:Numbers}&quot;, more_types) 
+<a name="l30"><span class="ln">30   </span></a>    &gt;&gt;&gt; parser.parse(&quot;List: 1, 2, 3&quot;) 
+<a name="l31"><span class="ln">31   </span></a>    &lt;Result () {'numbers': [1, 2, 3]}&gt; 
+<a name="l32"><span class="ln">32   </span></a> 
+<a name="l33"><span class="ln">33   </span></a> 
+<a name="l34"><span class="ln">34   </span></a>Enumeration Type (Name-to-Value Mappings) 
+<a name="l35"><span class="ln">35   </span></a>----------------------------------------- 
+<a name="l36"><span class="ln">36   </span></a> 
+<a name="l37"><span class="ln">37   </span></a>An Enumeration data type allows to select one of several enum values by using 
+<a name="l38"><span class="ln">38   </span></a>its name. The converter function returns the selected enum value. 
+<a name="l39"><span class="ln">39   </span></a> 
+<a name="l40"><span class="ln">40   </span></a>.. doctest:: make_enum 
+<a name="l41"><span class="ln">41   </span></a> 
+<a name="l42"><span class="ln">42   </span></a>    &gt;&gt;&gt; parse_enum_yesno = TypeBuilder.make_enum({&quot;yes&quot;: True, &quot;no&quot;: False}) 
+<a name="l43"><span class="ln">43   </span></a>    &gt;&gt;&gt; more_types = { &quot;YesNo&quot;: parse_enum_yesno } 
+<a name="l44"><span class="ln">44   </span></a>    &gt;&gt;&gt; parser = Parser(&quot;Answer: {answer:YesNo}&quot;, more_types) 
+<a name="l45"><span class="ln">45   </span></a>    &gt;&gt;&gt; parser.parse(&quot;Answer: yes&quot;) 
+<a name="l46"><span class="ln">46   </span></a>    &lt;Result () {'answer': True}&gt; 
+<a name="l47"><span class="ln">47   </span></a> 
+<a name="l48"><span class="ln">48   </span></a> 
+<a name="l49"><span class="ln">49   </span></a>Choice (Name Enumerations) 
+<a name="l50"><span class="ln">50   </span></a>----------------------------- 
+<a name="l51"><span class="ln">51   </span></a> 
+<a name="l52"><span class="ln">52   </span></a>A Choice data type allows to select one of several strings. 
+<a name="l53"><span class="ln">53   </span></a> 
+<a name="l54"><span class="ln">54   </span></a>.. doctest:: make_choice 
+<a name="l55"><span class="ln">55   </span></a> 
+<a name="l56"><span class="ln">56   </span></a>    &gt;&gt;&gt; parse_choice_yesno = TypeBuilder.make_choice([&quot;yes&quot;, &quot;no&quot;]) 
+<a name="l57"><span class="ln">57   </span></a>    &gt;&gt;&gt; more_types = { &quot;ChoiceYesNo&quot;: parse_choice_yesno } 
+<a name="l58"><span class="ln">58   </span></a>    &gt;&gt;&gt; parser = Parser(&quot;Answer: {answer:ChoiceYesNo}&quot;, more_types) 
+<a name="l59"><span class="ln">59   </span></a>    &gt;&gt;&gt; parser.parse(&quot;Answer: yes&quot;) 
+<a name="l60"><span class="ln">60   </span></a>    &lt;Result () {'answer': 'yes'}&gt; 
+<a name="l61"><span class="ln">61   </span></a> 
+<a name="l62"><span class="ln">62   </span></a>&quot;&quot;&quot;</span>
+<a name="l63"><span class="ln">63   </span></a>
+<a name="l64"><span class="ln">64   </span></a><span class="s3">from </span><span class="s1">__future__ </span><span class="s3">import </span><span class="s1">absolute_import</span>
+<a name="l65"><span class="ln">65   </span></a><span class="s3">import </span><span class="s1">inspect</span>
+<a name="l66"><span class="ln">66   </span></a><span class="s3">import </span><span class="s1">re</span>
+<a name="l67"><span class="ln">67   </span></a><span class="s3">import </span><span class="s1">enum</span>
+<a name="l68"><span class="ln">68   </span></a><span class="s3">from </span><span class="s1">parse_type.cardinality </span><span class="s3">import </span><span class="s1">pattern_group_count</span><span class="s3">, </span><span class="s1">\</span>
+<a name="l69"><span class="ln">69   </span></a>    <span class="s1">Cardinality</span><span class="s3">, </span><span class="s1">TypeBuilder </span><span class="s3">as </span><span class="s1">CardinalityTypeBuilder</span>
+<a name="l70"><span class="ln">70   </span></a>
+<a name="l71"><span class="ln">71   </span></a><span class="s1">__all__ = [</span><span class="s4">&quot;TypeBuilder&quot;</span><span class="s3">, </span><span class="s4">&quot;build_type_dict&quot;</span><span class="s3">, </span><span class="s4">&quot;parse_anything&quot;</span><span class="s1">]</span>
+<a name="l72"><span class="ln">72   </span></a>
+<a name="l73"><span class="ln">73   </span></a>
+<a name="l74"><span class="ln">74   </span></a><span class="s3">class </span><span class="s1">TypeBuilder(CardinalityTypeBuilder):</span>
+<a name="l75"><span class="ln">75   </span></a>    <span class="s2">&quot;&quot;&quot; 
+<a name="l76"><span class="ln">76   </span></a>    Provides a utility class to build type-converters (parse_types) for 
+<a name="l77"><span class="ln">77   </span></a>    the :mod:`parse` module. 
+<a name="l78"><span class="ln">78   </span></a>    &quot;&quot;&quot;</span>
+<a name="l79"><span class="ln">79   </span></a>    <span class="s1">default_strict = </span><span class="s3">True</span>
+<a name="l80"><span class="ln">80   </span></a>    <span class="s1">default_re_opts = (re.IGNORECASE | re.DOTALL)</span>
+<a name="l81"><span class="ln">81   </span></a>
+<a name="l82"><span class="ln">82   </span></a>    <span class="s1">@classmethod</span>
+<a name="l83"><span class="ln">83   </span></a>    <span class="s3">def </span><span class="s1">make_list(cls</span><span class="s3">, </span><span class="s1">item_converter=</span><span class="s3">None, </span><span class="s1">listsep=</span><span class="s4">','</span><span class="s1">):</span>
+<a name="l84"><span class="ln">84   </span></a>        <span class="s2">&quot;&quot;&quot; 
+<a name="l85"><span class="ln">85   </span></a>        Create a type converter for a list of items (many := 1..*). 
+<a name="l86"><span class="ln">86   </span></a>        The parser accepts anything and the converter needs to fail on errors. 
+<a name="l87"><span class="ln">87   </span></a> 
+<a name="l88"><span class="ln">88   </span></a>        :param item_converter:  Type converter for an item. 
+<a name="l89"><span class="ln">89   </span></a>        :param listsep:  List separator to use (as string). 
+<a name="l90"><span class="ln">90   </span></a>        :return: Type converter function object for the list. 
+<a name="l91"><span class="ln">91   </span></a>        &quot;&quot;&quot;</span>
+<a name="l92"><span class="ln">92   </span></a>        <span class="s3">if not </span><span class="s1">item_converter:</span>
+<a name="l93"><span class="ln">93   </span></a>            <span class="s1">item_converter = parse_anything</span>
+<a name="l94"><span class="ln">94   </span></a>        <span class="s3">return </span><span class="s1">cls.with_cardinality(Cardinality.many</span><span class="s3">, </span><span class="s1">item_converter</span><span class="s3">,</span>
+<a name="l95"><span class="ln">95   </span></a>                                    <span class="s1">pattern=cls.anything_pattern</span><span class="s3">,</span>
+<a name="l96"><span class="ln">96   </span></a>                                    <span class="s1">listsep=listsep)</span>
+<a name="l97"><span class="ln">97   </span></a>
+<a name="l98"><span class="ln">98   </span></a>    <span class="s1">@staticmethod</span>
+<a name="l99"><span class="ln">99   </span></a>    <span class="s3">def </span><span class="s1">make_enum(enum_mappings):</span>
+<a name="l100"><span class="ln">100  </span></a>        <span class="s2">&quot;&quot;&quot; 
+<a name="l101"><span class="ln">101  </span></a>        Creates a type converter for an enumeration or text-to-value mapping. 
+<a name="l102"><span class="ln">102  </span></a> 
+<a name="l103"><span class="ln">103  </span></a>        :param enum_mappings: Defines enumeration names and values. 
+<a name="l104"><span class="ln">104  </span></a>        :return: Type converter function object for the enum/mapping. 
+<a name="l105"><span class="ln">105  </span></a>        &quot;&quot;&quot;</span>
+<a name="l106"><span class="ln">106  </span></a>        <span class="s3">if </span><span class="s1">(inspect.isclass(enum_mappings) </span><span class="s3">and</span>
+<a name="l107"><span class="ln">107  </span></a>                <span class="s1">issubclass(enum_mappings</span><span class="s3">, </span><span class="s1">enum.Enum)):</span>
+<a name="l108"><span class="ln">108  </span></a>            <span class="s1">enum_class = enum_mappings</span>
+<a name="l109"><span class="ln">109  </span></a>            <span class="s1">enum_mappings = enum_class.__members__</span>
+<a name="l110"><span class="ln">110  </span></a>
+<a name="l111"><span class="ln">111  </span></a>        <span class="s3">def </span><span class="s1">convert_enum(text):</span>
+<a name="l112"><span class="ln">112  </span></a>            <span class="s3">if </span><span class="s1">text </span><span class="s3">not in </span><span class="s1">convert_enum.mappings:</span>
+<a name="l113"><span class="ln">113  </span></a>                <span class="s1">text = text.lower()     </span><span class="s0"># REQUIRED-BY: parse re.IGNORECASE</span>
+<a name="l114"><span class="ln">114  </span></a>            <span class="s3">return </span><span class="s1">convert_enum.mappings[text]    </span><span class="s0">#&lt; text.lower() ???</span>
+<a name="l115"><span class="ln">115  </span></a>        <span class="s1">convert_enum.pattern = </span><span class="s4">r&quot;|&quot;</span><span class="s1">.join(enum_mappings.keys())</span>
+<a name="l116"><span class="ln">116  </span></a>        <span class="s1">convert_enum.mappings = enum_mappings</span>
+<a name="l117"><span class="ln">117  </span></a>        <span class="s3">return </span><span class="s1">convert_enum</span>
+<a name="l118"><span class="ln">118  </span></a>
+<a name="l119"><span class="ln">119  </span></a>    <span class="s1">@staticmethod</span>
+<a name="l120"><span class="ln">120  </span></a>    <span class="s3">def </span><span class="s1">_normalize_choices(choices</span><span class="s3">, </span><span class="s1">transform):</span>
+<a name="l121"><span class="ln">121  </span></a>        <span class="s3">assert </span><span class="s1">transform </span><span class="s3">is None or </span><span class="s1">callable(transform)</span>
+<a name="l122"><span class="ln">122  </span></a>        <span class="s3">if </span><span class="s1">transform:</span>
+<a name="l123"><span class="ln">123  </span></a>            <span class="s1">choices = [transform(value)  </span><span class="s3">for </span><span class="s1">value </span><span class="s3">in </span><span class="s1">choices]</span>
+<a name="l124"><span class="ln">124  </span></a>        <span class="s3">else</span><span class="s1">:</span>
+<a name="l125"><span class="ln">125  </span></a>            <span class="s1">choices = list(choices)</span>
+<a name="l126"><span class="ln">126  </span></a>        <span class="s3">return </span><span class="s1">choices</span>
+<a name="l127"><span class="ln">127  </span></a>
+<a name="l128"><span class="ln">128  </span></a>    <span class="s1">@classmethod</span>
+<a name="l129"><span class="ln">129  </span></a>    <span class="s3">def </span><span class="s1">make_choice(cls</span><span class="s3">, </span><span class="s1">choices</span><span class="s3">, </span><span class="s1">transform=</span><span class="s3">None, </span><span class="s1">strict=</span><span class="s3">None</span><span class="s1">):</span>
+<a name="l130"><span class="ln">130  </span></a>        <span class="s2">&quot;&quot;&quot; 
+<a name="l131"><span class="ln">131  </span></a>        Creates a type-converter function to select one from a list of strings. 
+<a name="l132"><span class="ln">132  </span></a>        The type-converter function returns the selected choice_text. 
+<a name="l133"><span class="ln">133  </span></a>        The :param:`transform()` function is applied in the type converter. 
+<a name="l134"><span class="ln">134  </span></a>        It can be used to enforce the case (because parser uses re.IGNORECASE). 
+<a name="l135"><span class="ln">135  </span></a> 
+<a name="l136"><span class="ln">136  </span></a>        :param choices: List of strings as choice. 
+<a name="l137"><span class="ln">137  </span></a>        :param transform: Optional, initial transform function for parsed text. 
+<a name="l138"><span class="ln">138  </span></a>        :return: Type converter function object for this choices. 
+<a name="l139"><span class="ln">139  </span></a>        &quot;&quot;&quot;</span>
+<a name="l140"><span class="ln">140  </span></a>        <span class="s0"># -- NOTE: Parser uses re.IGNORECASE flag</span>
+<a name="l141"><span class="ln">141  </span></a>        <span class="s0">#    =&gt; transform may enforce case.</span>
+<a name="l142"><span class="ln">142  </span></a>        <span class="s1">choices = cls._normalize_choices(choices</span><span class="s3">, </span><span class="s1">transform)</span>
+<a name="l143"><span class="ln">143  </span></a>        <span class="s3">if </span><span class="s1">strict </span><span class="s3">is None</span><span class="s1">:</span>
+<a name="l144"><span class="ln">144  </span></a>            <span class="s1">strict = cls.default_strict</span>
+<a name="l145"><span class="ln">145  </span></a>
+<a name="l146"><span class="ln">146  </span></a>        <span class="s3">def </span><span class="s1">convert_choice(text):</span>
+<a name="l147"><span class="ln">147  </span></a>            <span class="s3">if </span><span class="s1">transform:</span>
+<a name="l148"><span class="ln">148  </span></a>                <span class="s1">text = transform(text)</span>
+<a name="l149"><span class="ln">149  </span></a>            <span class="s3">if </span><span class="s1">strict </span><span class="s3">and </span><span class="s1">text </span><span class="s3">not in </span><span class="s1">convert_choice.choices:</span>
+<a name="l150"><span class="ln">150  </span></a>                <span class="s1">values = </span><span class="s4">&quot;, &quot;</span><span class="s1">.join(convert_choice.choices)</span>
+<a name="l151"><span class="ln">151  </span></a>                <span class="s3">raise </span><span class="s1">ValueError(</span><span class="s4">&quot;%s not in: %s&quot; </span><span class="s1">% (text</span><span class="s3">, </span><span class="s1">values))</span>
+<a name="l152"><span class="ln">152  </span></a>            <span class="s3">return </span><span class="s1">text</span>
+<a name="l153"><span class="ln">153  </span></a>        <span class="s1">convert_choice.pattern = </span><span class="s4">r&quot;|&quot;</span><span class="s1">.join(choices)</span>
+<a name="l154"><span class="ln">154  </span></a>        <span class="s1">convert_choice.choices = choices</span>
+<a name="l155"><span class="ln">155  </span></a>        <span class="s3">return </span><span class="s1">convert_choice</span>
+<a name="l156"><span class="ln">156  </span></a>
+<a name="l157"><span class="ln">157  </span></a>    <span class="s1">@classmethod</span>
+<a name="l158"><span class="ln">158  </span></a>    <span class="s3">def </span><span class="s1">make_choice2(cls</span><span class="s3">, </span><span class="s1">choices</span><span class="s3">, </span><span class="s1">transform=</span><span class="s3">None, </span><span class="s1">strict=</span><span class="s3">None</span><span class="s1">):</span>
+<a name="l159"><span class="ln">159  </span></a>        <span class="s2">&quot;&quot;&quot; 
+<a name="l160"><span class="ln">160  </span></a>        Creates a type converter to select one item from a list of strings. 
+<a name="l161"><span class="ln">161  </span></a>        The type converter function returns a tuple (index, choice_text). 
+<a name="l162"><span class="ln">162  </span></a> 
+<a name="l163"><span class="ln">163  </span></a>        :param choices: List of strings as choice. 
+<a name="l164"><span class="ln">164  </span></a>        :param transform: Optional, initial transform function for parsed text. 
+<a name="l165"><span class="ln">165  </span></a>        :return: Type converter function object for this choices. 
+<a name="l166"><span class="ln">166  </span></a>        &quot;&quot;&quot;</span>
+<a name="l167"><span class="ln">167  </span></a>        <span class="s1">choices = cls._normalize_choices(choices</span><span class="s3">, </span><span class="s1">transform)</span>
+<a name="l168"><span class="ln">168  </span></a>        <span class="s3">if </span><span class="s1">strict </span><span class="s3">is None</span><span class="s1">:</span>
+<a name="l169"><span class="ln">169  </span></a>            <span class="s1">strict = cls.default_strict</span>
+<a name="l170"><span class="ln">170  </span></a>
+<a name="l171"><span class="ln">171  </span></a>        <span class="s3">def </span><span class="s1">convert_choice2(text):</span>
+<a name="l172"><span class="ln">172  </span></a>            <span class="s3">if </span><span class="s1">transform:</span>
+<a name="l173"><span class="ln">173  </span></a>                <span class="s1">text = transform(text)</span>
+<a name="l174"><span class="ln">174  </span></a>            <span class="s3">if </span><span class="s1">strict </span><span class="s3">and </span><span class="s1">text </span><span class="s3">not in </span><span class="s1">convert_choice2.choices:</span>
+<a name="l175"><span class="ln">175  </span></a>                <span class="s1">values = </span><span class="s4">&quot;, &quot;</span><span class="s1">.join(convert_choice2.choices)</span>
+<a name="l176"><span class="ln">176  </span></a>                <span class="s3">raise </span><span class="s1">ValueError(</span><span class="s4">&quot;%s not in: %s&quot; </span><span class="s1">% (text</span><span class="s3">, </span><span class="s1">values))</span>
+<a name="l177"><span class="ln">177  </span></a>            <span class="s1">index = convert_choice2.choices.index(text)</span>
+<a name="l178"><span class="ln">178  </span></a>            <span class="s3">return </span><span class="s1">index</span><span class="s3">, </span><span class="s1">text</span>
+<a name="l179"><span class="ln">179  </span></a>        <span class="s1">convert_choice2.pattern = </span><span class="s4">r&quot;|&quot;</span><span class="s1">.join(choices)</span>
+<a name="l180"><span class="ln">180  </span></a>        <span class="s1">convert_choice2.choices = choices</span>
+<a name="l181"><span class="ln">181  </span></a>        <span class="s3">return </span><span class="s1">convert_choice2</span>
+<a name="l182"><span class="ln">182  </span></a>
+<a name="l183"><span class="ln">183  </span></a>    <span class="s1">@classmethod</span>
+<a name="l184"><span class="ln">184  </span></a>    <span class="s3">def </span><span class="s1">make_variant(cls</span><span class="s3">, </span><span class="s1">converters</span><span class="s3">, </span><span class="s1">re_opts=</span><span class="s3">None, </span><span class="s1">compiled=</span><span class="s3">False, </span><span class="s1">strict=</span><span class="s3">True</span><span class="s1">):</span>
+<a name="l185"><span class="ln">185  </span></a>        <span class="s2">&quot;&quot;&quot; 
+<a name="l186"><span class="ln">186  </span></a>        Creates a type converter for a number of type converter alternatives. 
+<a name="l187"><span class="ln">187  </span></a>        The first matching type converter is used. 
+<a name="l188"><span class="ln">188  </span></a> 
+<a name="l189"><span class="ln">189  </span></a>        REQUIRES: type_converter.pattern attribute 
+<a name="l190"><span class="ln">190  </span></a> 
+<a name="l191"><span class="ln">191  </span></a>        :param converters: List of type converters as alternatives. 
+<a name="l192"><span class="ln">192  </span></a>        :param re_opts:  Regular expression options zu use (=default_re_opts). 
+<a name="l193"><span class="ln">193  </span></a>        :param compiled: Use compiled regexp matcher, if true (=False). 
+<a name="l194"><span class="ln">194  </span></a>        :param strict:   Enable assertion checks. 
+<a name="l195"><span class="ln">195  </span></a>        :return: Type converter function object. 
+<a name="l196"><span class="ln">196  </span></a> 
+<a name="l197"><span class="ln">197  </span></a>        .. note:: 
+<a name="l198"><span class="ln">198  </span></a> 
+<a name="l199"><span class="ln">199  </span></a>            Works only with named fields in :class:`parse.Parser`. 
+<a name="l200"><span class="ln">200  </span></a>            Parser needs group_index delta for unnamed/fixed fields. 
+<a name="l201"><span class="ln">201  </span></a>            This is not supported for user-defined types. 
+<a name="l202"><span class="ln">202  </span></a>            Otherwise, you need to use :class:`parse_type.parse.Parser` 
+<a name="l203"><span class="ln">203  </span></a>            (patched version of the :mod:`parse` module). 
+<a name="l204"><span class="ln">204  </span></a>        &quot;&quot;&quot;</span>
+<a name="l205"><span class="ln">205  </span></a>        <span class="s0"># -- NOTE: Uses double-dispatch with regex pattern rematch because</span>
+<a name="l206"><span class="ln">206  </span></a>        <span class="s0">#          match is not passed through to primary type converter.</span>
+<a name="l207"><span class="ln">207  </span></a>        <span class="s3">assert </span><span class="s1">converters</span><span class="s3">, </span><span class="s4">&quot;REQUIRE: Non-empty list.&quot;</span>
+<a name="l208"><span class="ln">208  </span></a>        <span class="s3">if </span><span class="s1">len(converters) == </span><span class="s5">1</span><span class="s1">:</span>
+<a name="l209"><span class="ln">209  </span></a>            <span class="s3">return </span><span class="s1">converters[</span><span class="s5">0</span><span class="s1">]</span>
+<a name="l210"><span class="ln">210  </span></a>        <span class="s3">if </span><span class="s1">re_opts </span><span class="s3">is None</span><span class="s1">:</span>
+<a name="l211"><span class="ln">211  </span></a>            <span class="s1">re_opts = cls.default_re_opts</span>
+<a name="l212"><span class="ln">212  </span></a>
+<a name="l213"><span class="ln">213  </span></a>        <span class="s1">pattern = </span><span class="s4">r&quot;)|(&quot;</span><span class="s1">.join([tc.pattern </span><span class="s3">for </span><span class="s1">tc </span><span class="s3">in </span><span class="s1">converters])</span>
+<a name="l214"><span class="ln">214  </span></a>        <span class="s1">pattern = </span><span class="s4">r&quot;(&quot;</span><span class="s1">+ pattern + </span><span class="s4">&quot;)&quot;</span>
+<a name="l215"><span class="ln">215  </span></a>        <span class="s1">group_count = len(converters)</span>
+<a name="l216"><span class="ln">216  </span></a>        <span class="s3">for </span><span class="s1">converter </span><span class="s3">in </span><span class="s1">converters:</span>
+<a name="l217"><span class="ln">217  </span></a>            <span class="s1">group_count += pattern_group_count(converter.pattern)</span>
+<a name="l218"><span class="ln">218  </span></a>
+<a name="l219"><span class="ln">219  </span></a>        <span class="s3">if </span><span class="s1">compiled:</span>
+<a name="l220"><span class="ln">220  </span></a>            <span class="s1">convert_variant = cls.__create_convert_variant_compiled(converters</span><span class="s3">,</span>
+<a name="l221"><span class="ln">221  </span></a>                                                                    <span class="s1">re_opts</span><span class="s3">,</span>
+<a name="l222"><span class="ln">222  </span></a>                                                                    <span class="s1">strict)</span>
+<a name="l223"><span class="ln">223  </span></a>        <span class="s3">else</span><span class="s1">:</span>
+<a name="l224"><span class="ln">224  </span></a>            <span class="s1">convert_variant = cls.__create_convert_variant(re_opts</span><span class="s3">, </span><span class="s1">strict)</span>
+<a name="l225"><span class="ln">225  </span></a>        <span class="s1">convert_variant.pattern = pattern</span>
+<a name="l226"><span class="ln">226  </span></a>        <span class="s1">convert_variant.converters = tuple(converters)</span>
+<a name="l227"><span class="ln">227  </span></a>        <span class="s1">convert_variant.regex_group_count = group_count</span>
+<a name="l228"><span class="ln">228  </span></a>        <span class="s3">return </span><span class="s1">convert_variant</span>
+<a name="l229"><span class="ln">229  </span></a>
+<a name="l230"><span class="ln">230  </span></a>    <span class="s1">@staticmethod</span>
+<a name="l231"><span class="ln">231  </span></a>    <span class="s3">def </span><span class="s1">__create_convert_variant(re_opts</span><span class="s3">, </span><span class="s1">strict):</span>
+<a name="l232"><span class="ln">232  </span></a>        <span class="s0"># -- USE: Regular expression pattern (compiled on use).</span>
+<a name="l233"><span class="ln">233  </span></a>        <span class="s3">def </span><span class="s1">convert_variant(text</span><span class="s3">, </span><span class="s1">m=</span><span class="s3">None</span><span class="s1">):</span>
+<a name="l234"><span class="ln">234  </span></a>            <span class="s0"># pylint: disable=invalid-name, unused-argument, missing-docstring</span>
+<a name="l235"><span class="ln">235  </span></a>            <span class="s3">for </span><span class="s1">converter </span><span class="s3">in </span><span class="s1">convert_variant.converters:</span>
+<a name="l236"><span class="ln">236  </span></a>                <span class="s3">if </span><span class="s1">re.match(converter.pattern</span><span class="s3">, </span><span class="s1">text</span><span class="s3">, </span><span class="s1">re_opts):</span>
+<a name="l237"><span class="ln">237  </span></a>                    <span class="s3">return </span><span class="s1">converter(text)</span>
+<a name="l238"><span class="ln">238  </span></a>            <span class="s0"># -- pragma: no cover</span>
+<a name="l239"><span class="ln">239  </span></a>            <span class="s3">assert not </span><span class="s1">strict</span><span class="s3">, </span><span class="s4">&quot;OOPS-VARIANT-MISMATCH: %s&quot; </span><span class="s1">% text</span>
+<a name="l240"><span class="ln">240  </span></a>            <span class="s3">return None</span>
+<a name="l241"><span class="ln">241  </span></a>        <span class="s3">return </span><span class="s1">convert_variant</span>
+<a name="l242"><span class="ln">242  </span></a>
+<a name="l243"><span class="ln">243  </span></a>    <span class="s1">@staticmethod</span>
+<a name="l244"><span class="ln">244  </span></a>    <span class="s3">def </span><span class="s1">__create_convert_variant_compiled(converters</span><span class="s3">, </span><span class="s1">re_opts</span><span class="s3">, </span><span class="s1">strict):</span>
+<a name="l245"><span class="ln">245  </span></a>        <span class="s0"># -- USE: Compiled regular expression matcher.</span>
+<a name="l246"><span class="ln">246  </span></a>        <span class="s3">for </span><span class="s1">converter </span><span class="s3">in </span><span class="s1">converters:</span>
+<a name="l247"><span class="ln">247  </span></a>            <span class="s1">matcher = getattr(converter</span><span class="s3">, </span><span class="s4">&quot;matcher&quot;</span><span class="s3">, None</span><span class="s1">)</span>
+<a name="l248"><span class="ln">248  </span></a>            <span class="s3">if not </span><span class="s1">matcher:</span>
+<a name="l249"><span class="ln">249  </span></a>                <span class="s1">converter.matcher = re.compile(converter.pattern</span><span class="s3">, </span><span class="s1">re_opts)</span>
+<a name="l250"><span class="ln">250  </span></a>
+<a name="l251"><span class="ln">251  </span></a>        <span class="s3">def </span><span class="s1">convert_variant(text</span><span class="s3">, </span><span class="s1">m=</span><span class="s3">None</span><span class="s1">):</span>
+<a name="l252"><span class="ln">252  </span></a>            <span class="s0"># pylint: disable=invalid-name, unused-argument, missing-docstring</span>
+<a name="l253"><span class="ln">253  </span></a>            <span class="s3">for </span><span class="s1">converter </span><span class="s3">in </span><span class="s1">convert_variant.converters:</span>
+<a name="l254"><span class="ln">254  </span></a>                <span class="s3">if </span><span class="s1">converter.matcher.match(text):</span>
+<a name="l255"><span class="ln">255  </span></a>                    <span class="s3">return </span><span class="s1">converter(text)</span>
+<a name="l256"><span class="ln">256  </span></a>            <span class="s0"># -- pragma: no cover</span>
+<a name="l257"><span class="ln">257  </span></a>            <span class="s3">assert not </span><span class="s1">strict</span><span class="s3">, </span><span class="s4">&quot;OOPS-VARIANT-MISMATCH: %s&quot; </span><span class="s1">% text</span>
+<a name="l258"><span class="ln">258  </span></a>            <span class="s3">return None</span>
+<a name="l259"><span class="ln">259  </span></a>        <span class="s3">return </span><span class="s1">convert_variant</span>
+<a name="l260"><span class="ln">260  </span></a>
+<a name="l261"><span class="ln">261  </span></a>
+<a name="l262"><span class="ln">262  </span></a><span class="s3">def </span><span class="s1">build_type_dict(converters):</span>
+<a name="l263"><span class="ln">263  </span></a>    <span class="s2">&quot;&quot;&quot; 
+<a name="l264"><span class="ln">264  </span></a>    Builds type dictionary for user-defined type converters, 
+<a name="l265"><span class="ln">265  </span></a>    used by :mod:`parse` module. 
+<a name="l266"><span class="ln">266  </span></a>    This requires that each type converter has a &quot;name&quot; attribute. 
+<a name="l267"><span class="ln">267  </span></a> 
+<a name="l268"><span class="ln">268  </span></a>    :param converters: List of type converters (parse_types) 
+<a name="l269"><span class="ln">269  </span></a>    :return: Type converter dictionary 
+<a name="l270"><span class="ln">270  </span></a>    &quot;&quot;&quot;</span>
+<a name="l271"><span class="ln">271  </span></a>    <span class="s1">more_types = {}</span>
+<a name="l272"><span class="ln">272  </span></a>    <span class="s3">for </span><span class="s1">converter </span><span class="s3">in </span><span class="s1">converters:</span>
+<a name="l273"><span class="ln">273  </span></a>        <span class="s3">assert </span><span class="s1">callable(converter)</span>
+<a name="l274"><span class="ln">274  </span></a>        <span class="s1">more_types[converter.name] = converter</span>
+<a name="l275"><span class="ln">275  </span></a>    <span class="s3">return </span><span class="s1">more_types</span>
+<a name="l276"><span class="ln">276  </span></a>
+<a name="l277"><span class="ln">277  </span></a><span class="s0"># -----------------------------------------------------------------------------</span>
+<a name="l278"><span class="ln">278  </span></a><span class="s0"># COMMON TYPE CONVERTERS</span>
+<a name="l279"><span class="ln">279  </span></a><span class="s0"># -----------------------------------------------------------------------------</span>
+<a name="l280"><span class="ln">280  </span></a><span class="s3">def </span><span class="s1">parse_anything(text</span><span class="s3">, </span><span class="s1">match=</span><span class="s3">None, </span><span class="s1">match_start=</span><span class="s5">0</span><span class="s1">):</span>
+<a name="l281"><span class="ln">281  </span></a>    <span class="s2">&quot;&quot;&quot; 
+<a name="l282"><span class="ln">282  </span></a>    Provides a generic type converter that accepts anything and returns 
+<a name="l283"><span class="ln">283  </span></a>    the text (unchanged). 
+<a name="l284"><span class="ln">284  </span></a> 
+<a name="l285"><span class="ln">285  </span></a>    :param text:  Text to convert (as string). 
+<a name="l286"><span class="ln">286  </span></a>    :return: Same text (as string). 
+<a name="l287"><span class="ln">287  </span></a>    &quot;&quot;&quot;</span>
+<a name="l288"><span class="ln">288  </span></a>    <span class="s0"># pylint: disable=unused-argument</span>
+<a name="l289"><span class="ln">289  </span></a>    <span class="s3">return </span><span class="s1">text</span>
+<a name="l290"><span class="ln">290  </span></a><span class="s1">parse_anything.pattern = TypeBuilder.anything_pattern</span>
+<a name="l291"><span class="ln">291  </span></a>
+<a name="l292"><span class="ln">292  </span></a>
+<a name="l293"><span class="ln">293  </span></a><span class="s0"># -----------------------------------------------------------------------------</span>
+<a name="l294"><span class="ln">294  </span></a><span class="s0"># Copyright (c) 2012-2017 by Jens Engel (https://github/jenisys/parse_type)</span>
+<a name="l295"><span class="ln">295  </span></a><span class="s0">#</span>
+<a name="l296"><span class="ln">296  </span></a><span class="s0"># Permission is hereby granted, free of charge, to any person obtaining a copy</span>
+<a name="l297"><span class="ln">297  </span></a><span class="s0"># of this software and associated documentation files (the &quot;Software&quot;), to deal</span>
+<a name="l298"><span class="ln">298  </span></a><span class="s0"># in the Software without restriction, including without limitation the rights</span>
+<a name="l299"><span class="ln">299  </span></a><span class="s0"># to use, copy, modify, merge, publish, distribute, sublicense, and/or sell</span>
+<a name="l300"><span class="ln">300  </span></a><span class="s0"># copies of the Software, and to permit persons to whom the Software is</span>
+<a name="l301"><span class="ln">301  </span></a><span class="s0"># furnished to do so, subject to the following conditions:</span>
+<a name="l302"><span class="ln">302  </span></a><span class="s0">#</span>
+<a name="l303"><span class="ln">303  </span></a><span class="s0">#  The above copyright notice and this permission notice shall be included in</span>
+<a name="l304"><span class="ln">304  </span></a><span class="s0">#  all copies or substantial portions of the Software.</span>
+<a name="l305"><span class="ln">305  </span></a><span class="s0">#</span>
+<a name="l306"><span class="ln">306  </span></a><span class="s0"># THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR</span>
+<a name="l307"><span class="ln">307  </span></a><span class="s0"># IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,</span>
+<a name="l308"><span class="ln">308  </span></a><span class="s0"># FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE</span>
+<a name="l309"><span class="ln">309  </span></a><span class="s0"># AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER</span>
+<a name="l310"><span class="ln">310  </span></a><span class="s0"># LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,</span>
+<a name="l311"><span class="ln">311  </span></a><span class="s0"># OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE</span>
+<a name="l312"><span class="ln">312  </span></a><span class="s0"># SOFTWARE.</span>
+<a name="l313"><span class="ln">313  </span></a></pre>
+</body>
+</html>

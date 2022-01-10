@@ -1,0 +1,249 @@
+<html>
+<head>
+<title>outcomes.py</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #629755; font-style: italic;}
+.s1 { color: #a9b7c6;}
+.s2 { color: #cc7832;}
+.s3 { color: #808080;}
+.s4 { color: #6a8759;}
+.ln { color: #606366; font-weight: normal; font-style: normal; }
+</style>
+</head>
+<body bgcolor="#2b2b2b">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+outcomes.py</font>
+</center></td></tr></table>
+<pre><a name="l1"><span class="ln">1    </span></a><span class="s0">&quot;&quot;&quot;Exception classes and constants handling test outcomes as well as 
+<a name="l2"><span class="ln">2    </span></a>functions creating them.&quot;&quot;&quot;</span>
+<a name="l3"><span class="ln">3    </span></a><span class="s2">import </span><span class="s1">sys</span>
+<a name="l4"><span class="ln">4    </span></a><span class="s2">from </span><span class="s1">typing </span><span class="s2">import </span><span class="s1">Any</span>
+<a name="l5"><span class="ln">5    </span></a><span class="s2">from </span><span class="s1">typing </span><span class="s2">import </span><span class="s1">Callable</span>
+<a name="l6"><span class="ln">6    </span></a><span class="s2">from </span><span class="s1">typing </span><span class="s2">import </span><span class="s1">cast</span>
+<a name="l7"><span class="ln">7    </span></a><span class="s2">from </span><span class="s1">typing </span><span class="s2">import </span><span class="s1">Optional</span>
+<a name="l8"><span class="ln">8    </span></a><span class="s2">from </span><span class="s1">typing </span><span class="s2">import </span><span class="s1">Type</span>
+<a name="l9"><span class="ln">9    </span></a><span class="s2">from </span><span class="s1">typing </span><span class="s2">import </span><span class="s1">TypeVar</span>
+<a name="l10"><span class="ln">10   </span></a>
+<a name="l11"><span class="ln">11   </span></a><span class="s1">TYPE_CHECKING = </span><span class="s2">False  </span><span class="s3"># Avoid circular import through compat.</span>
+<a name="l12"><span class="ln">12   </span></a>
+<a name="l13"><span class="ln">13   </span></a><span class="s2">if </span><span class="s1">TYPE_CHECKING:</span>
+<a name="l14"><span class="ln">14   </span></a>    <span class="s2">from </span><span class="s1">typing </span><span class="s2">import </span><span class="s1">NoReturn</span>
+<a name="l15"><span class="ln">15   </span></a>    <span class="s2">from </span><span class="s1">typing_extensions </span><span class="s2">import </span><span class="s1">Protocol</span>
+<a name="l16"><span class="ln">16   </span></a><span class="s2">else</span><span class="s1">:</span>
+<a name="l17"><span class="ln">17   </span></a>    <span class="s3"># typing.Protocol is only available starting from Python 3.8. It is also</span>
+<a name="l18"><span class="ln">18   </span></a>    <span class="s3"># available from typing_extensions, but we don't want a runtime dependency</span>
+<a name="l19"><span class="ln">19   </span></a>    <span class="s3"># on that. So use a dummy runtime implementation.</span>
+<a name="l20"><span class="ln">20   </span></a>    <span class="s2">from </span><span class="s1">typing </span><span class="s2">import </span><span class="s1">Generic</span>
+<a name="l21"><span class="ln">21   </span></a>
+<a name="l22"><span class="ln">22   </span></a>    <span class="s1">Protocol = Generic</span>
+<a name="l23"><span class="ln">23   </span></a>
+<a name="l24"><span class="ln">24   </span></a>
+<a name="l25"><span class="ln">25   </span></a><span class="s2">class </span><span class="s1">OutcomeException(BaseException):</span>
+<a name="l26"><span class="ln">26   </span></a>    <span class="s0">&quot;&quot;&quot;OutcomeException and its subclass instances indicate and contain info 
+<a name="l27"><span class="ln">27   </span></a>    about test and collection outcomes.&quot;&quot;&quot;</span>
+<a name="l28"><span class="ln">28   </span></a>
+<a name="l29"><span class="ln">29   </span></a>    <span class="s2">def </span><span class="s1">__init__(self</span><span class="s2">, </span><span class="s1">msg: Optional[str] = </span><span class="s2">None, </span><span class="s1">pytrace: bool = </span><span class="s2">True</span><span class="s1">) -&gt; </span><span class="s2">None</span><span class="s1">:</span>
+<a name="l30"><span class="ln">30   </span></a>        <span class="s2">if </span><span class="s1">msg </span><span class="s2">is not None and not </span><span class="s1">isinstance(msg</span><span class="s2">, </span><span class="s1">str):</span>
+<a name="l31"><span class="ln">31   </span></a>            <span class="s1">error_msg = (  </span><span class="s3"># type: ignore[unreachable]</span>
+<a name="l32"><span class="ln">32   </span></a>                <span class="s4">&quot;{} expected string as 'msg' parameter, got '{}' instead.</span><span class="s2">\n</span><span class="s4">&quot;</span>
+<a name="l33"><span class="ln">33   </span></a>                <span class="s4">&quot;Perhaps you meant to use a mark?&quot;</span>
+<a name="l34"><span class="ln">34   </span></a>            <span class="s1">)</span>
+<a name="l35"><span class="ln">35   </span></a>            <span class="s2">raise </span><span class="s1">TypeError(error_msg.format(type(self).__name__</span><span class="s2">, </span><span class="s1">type(msg).__name__))</span>
+<a name="l36"><span class="ln">36   </span></a>        <span class="s1">BaseException.__init__(self</span><span class="s2">, </span><span class="s1">msg)</span>
+<a name="l37"><span class="ln">37   </span></a>        <span class="s1">self.msg = msg</span>
+<a name="l38"><span class="ln">38   </span></a>        <span class="s1">self.pytrace = pytrace</span>
+<a name="l39"><span class="ln">39   </span></a>
+<a name="l40"><span class="ln">40   </span></a>    <span class="s2">def </span><span class="s1">__repr__(self) -&gt; str:</span>
+<a name="l41"><span class="ln">41   </span></a>        <span class="s2">if </span><span class="s1">self.msg </span><span class="s2">is not None</span><span class="s1">:</span>
+<a name="l42"><span class="ln">42   </span></a>            <span class="s2">return </span><span class="s1">self.msg</span>
+<a name="l43"><span class="ln">43   </span></a>        <span class="s2">return </span><span class="s4">f&quot;&lt;</span><span class="s2">{</span><span class="s1">self.__class__.__name__</span><span class="s2">} </span><span class="s4">instance&gt;&quot;</span>
+<a name="l44"><span class="ln">44   </span></a>
+<a name="l45"><span class="ln">45   </span></a>    <span class="s1">__str__ = __repr__</span>
+<a name="l46"><span class="ln">46   </span></a>
+<a name="l47"><span class="ln">47   </span></a>
+<a name="l48"><span class="ln">48   </span></a><span class="s1">TEST_OUTCOME = (OutcomeException</span><span class="s2">, </span><span class="s1">Exception)</span>
+<a name="l49"><span class="ln">49   </span></a>
+<a name="l50"><span class="ln">50   </span></a>
+<a name="l51"><span class="ln">51   </span></a><span class="s2">class </span><span class="s1">Skipped(OutcomeException):</span>
+<a name="l52"><span class="ln">52   </span></a>    <span class="s3"># XXX hackish: on 3k we fake to live in the builtins</span>
+<a name="l53"><span class="ln">53   </span></a>    <span class="s3"># in order to have Skipped exception printing shorter/nicer</span>
+<a name="l54"><span class="ln">54   </span></a>    <span class="s1">__module__ = </span><span class="s4">&quot;builtins&quot;</span>
+<a name="l55"><span class="ln">55   </span></a>
+<a name="l56"><span class="ln">56   </span></a>    <span class="s2">def </span><span class="s1">__init__(</span>
+<a name="l57"><span class="ln">57   </span></a>        <span class="s1">self</span><span class="s2">,</span>
+<a name="l58"><span class="ln">58   </span></a>        <span class="s1">msg: Optional[str] = </span><span class="s2">None,</span>
+<a name="l59"><span class="ln">59   </span></a>        <span class="s1">pytrace: bool = </span><span class="s2">True,</span>
+<a name="l60"><span class="ln">60   </span></a>        <span class="s1">allow_module_level: bool = </span><span class="s2">False,</span>
+<a name="l61"><span class="ln">61   </span></a>    <span class="s1">) -&gt; </span><span class="s2">None</span><span class="s1">:</span>
+<a name="l62"><span class="ln">62   </span></a>        <span class="s1">OutcomeException.__init__(self</span><span class="s2">, </span><span class="s1">msg=msg</span><span class="s2">, </span><span class="s1">pytrace=pytrace)</span>
+<a name="l63"><span class="ln">63   </span></a>        <span class="s1">self.allow_module_level = allow_module_level</span>
+<a name="l64"><span class="ln">64   </span></a>
+<a name="l65"><span class="ln">65   </span></a>
+<a name="l66"><span class="ln">66   </span></a><span class="s2">class </span><span class="s1">Failed(OutcomeException):</span>
+<a name="l67"><span class="ln">67   </span></a>    <span class="s0">&quot;&quot;&quot;Raised from an explicit call to pytest.fail().&quot;&quot;&quot;</span>
+<a name="l68"><span class="ln">68   </span></a>
+<a name="l69"><span class="ln">69   </span></a>    <span class="s1">__module__ = </span><span class="s4">&quot;builtins&quot;</span>
+<a name="l70"><span class="ln">70   </span></a>
+<a name="l71"><span class="ln">71   </span></a>
+<a name="l72"><span class="ln">72   </span></a><span class="s2">class </span><span class="s1">Exit(Exception):</span>
+<a name="l73"><span class="ln">73   </span></a>    <span class="s0">&quot;&quot;&quot;Raised for immediate program exits (no tracebacks/summaries).&quot;&quot;&quot;</span>
+<a name="l74"><span class="ln">74   </span></a>
+<a name="l75"><span class="ln">75   </span></a>    <span class="s2">def </span><span class="s1">__init__(</span>
+<a name="l76"><span class="ln">76   </span></a>        <span class="s1">self</span><span class="s2">, </span><span class="s1">msg: str = </span><span class="s4">&quot;unknown reason&quot;</span><span class="s2">, </span><span class="s1">returncode: Optional[int] = </span><span class="s2">None</span>
+<a name="l77"><span class="ln">77   </span></a>    <span class="s1">) -&gt; </span><span class="s2">None</span><span class="s1">:</span>
+<a name="l78"><span class="ln">78   </span></a>        <span class="s1">self.msg = msg</span>
+<a name="l79"><span class="ln">79   </span></a>        <span class="s1">self.returncode = returncode</span>
+<a name="l80"><span class="ln">80   </span></a>        <span class="s1">super().__init__(msg)</span>
+<a name="l81"><span class="ln">81   </span></a>
+<a name="l82"><span class="ln">82   </span></a>
+<a name="l83"><span class="ln">83   </span></a><span class="s3"># Elaborate hack to work around https://github.com/python/mypy/issues/2087.</span>
+<a name="l84"><span class="ln">84   </span></a><span class="s3"># Ideally would just be `exit.Exception = Exit` etc.</span>
+<a name="l85"><span class="ln">85   </span></a>
+<a name="l86"><span class="ln">86   </span></a><span class="s1">_F = TypeVar(</span><span class="s4">&quot;_F&quot;</span><span class="s2">, </span><span class="s1">bound=Callable[...</span><span class="s2">, </span><span class="s1">object])</span>
+<a name="l87"><span class="ln">87   </span></a><span class="s1">_ET = TypeVar(</span><span class="s4">&quot;_ET&quot;</span><span class="s2">, </span><span class="s1">bound=Type[BaseException])</span>
+<a name="l88"><span class="ln">88   </span></a>
+<a name="l89"><span class="ln">89   </span></a>
+<a name="l90"><span class="ln">90   </span></a><span class="s2">class </span><span class="s1">_WithException(Protocol[_F</span><span class="s2">, </span><span class="s1">_ET]):</span>
+<a name="l91"><span class="ln">91   </span></a>    <span class="s1">Exception: _ET</span>
+<a name="l92"><span class="ln">92   </span></a>    <span class="s1">__call__: _F</span>
+<a name="l93"><span class="ln">93   </span></a>
+<a name="l94"><span class="ln">94   </span></a>
+<a name="l95"><span class="ln">95   </span></a><span class="s2">def </span><span class="s1">_with_exception(exception_type: _ET) -&gt; Callable[[_F]</span><span class="s2">, </span><span class="s1">_WithException[_F</span><span class="s2">, </span><span class="s1">_ET]]:</span>
+<a name="l96"><span class="ln">96   </span></a>    <span class="s2">def </span><span class="s1">decorate(func: _F) -&gt; _WithException[_F</span><span class="s2">, </span><span class="s1">_ET]:</span>
+<a name="l97"><span class="ln">97   </span></a>        <span class="s1">func_with_exception = cast(_WithException[_F</span><span class="s2">, </span><span class="s1">_ET]</span><span class="s2">, </span><span class="s1">func)</span>
+<a name="l98"><span class="ln">98   </span></a>        <span class="s1">func_with_exception.Exception = exception_type</span>
+<a name="l99"><span class="ln">99   </span></a>        <span class="s2">return </span><span class="s1">func_with_exception</span>
+<a name="l100"><span class="ln">100  </span></a>
+<a name="l101"><span class="ln">101  </span></a>    <span class="s2">return </span><span class="s1">decorate</span>
+<a name="l102"><span class="ln">102  </span></a>
+<a name="l103"><span class="ln">103  </span></a>
+<a name="l104"><span class="ln">104  </span></a><span class="s3"># Exposed helper methods.</span>
+<a name="l105"><span class="ln">105  </span></a>
+<a name="l106"><span class="ln">106  </span></a>
+<a name="l107"><span class="ln">107  </span></a><span class="s1">@_with_exception(Exit)</span>
+<a name="l108"><span class="ln">108  </span></a><span class="s2">def </span><span class="s1">exit(msg: str</span><span class="s2">, </span><span class="s1">returncode: Optional[int] = </span><span class="s2">None</span><span class="s1">) -&gt; </span><span class="s4">&quot;NoReturn&quot;</span><span class="s1">:</span>
+<a name="l109"><span class="ln">109  </span></a>    <span class="s0">&quot;&quot;&quot;Exit testing process. 
+<a name="l110"><span class="ln">110  </span></a> 
+<a name="l111"><span class="ln">111  </span></a>    :param str msg: Message to display upon exit. 
+<a name="l112"><span class="ln">112  </span></a>    :param int returncode: Return code to be used when exiting pytest. 
+<a name="l113"><span class="ln">113  </span></a>    &quot;&quot;&quot;</span>
+<a name="l114"><span class="ln">114  </span></a>    <span class="s1">__tracebackhide__ = </span><span class="s2">True</span>
+<a name="l115"><span class="ln">115  </span></a>    <span class="s2">raise </span><span class="s1">Exit(msg</span><span class="s2">, </span><span class="s1">returncode)</span>
+<a name="l116"><span class="ln">116  </span></a>
+<a name="l117"><span class="ln">117  </span></a>
+<a name="l118"><span class="ln">118  </span></a><span class="s1">@_with_exception(Skipped)</span>
+<a name="l119"><span class="ln">119  </span></a><span class="s2">def </span><span class="s1">skip(msg: str = </span><span class="s4">&quot;&quot;</span><span class="s2">, </span><span class="s1">*</span><span class="s2">, </span><span class="s1">allow_module_level: bool = </span><span class="s2">False</span><span class="s1">) -&gt; </span><span class="s4">&quot;NoReturn&quot;</span><span class="s1">:</span>
+<a name="l120"><span class="ln">120  </span></a>    <span class="s0">&quot;&quot;&quot;Skip an executing test with the given message. 
+<a name="l121"><span class="ln">121  </span></a> 
+<a name="l122"><span class="ln">122  </span></a>    This function should be called only during testing (setup, call or teardown) or 
+<a name="l123"><span class="ln">123  </span></a>    during collection by using the ``allow_module_level`` flag.  This function can 
+<a name="l124"><span class="ln">124  </span></a>    be called in doctests as well. 
+<a name="l125"><span class="ln">125  </span></a> 
+<a name="l126"><span class="ln">126  </span></a>    :param bool allow_module_level: 
+<a name="l127"><span class="ln">127  </span></a>        Allows this function to be called at module level, skipping the rest 
+<a name="l128"><span class="ln">128  </span></a>        of the module. Defaults to False. 
+<a name="l129"><span class="ln">129  </span></a> 
+<a name="l130"><span class="ln">130  </span></a>    .. note:: 
+<a name="l131"><span class="ln">131  </span></a>        It is better to use the :ref:`pytest.mark.skipif ref` marker when 
+<a name="l132"><span class="ln">132  </span></a>        possible to declare a test to be skipped under certain conditions 
+<a name="l133"><span class="ln">133  </span></a>        like mismatching platforms or dependencies. 
+<a name="l134"><span class="ln">134  </span></a>        Similarly, use the ``# doctest: +SKIP`` directive (see `doctest.SKIP 
+<a name="l135"><span class="ln">135  </span></a>        &lt;https://docs.python.org/3/library/doctest.html#doctest.SKIP&gt;`_) 
+<a name="l136"><span class="ln">136  </span></a>        to skip a doctest statically. 
+<a name="l137"><span class="ln">137  </span></a>    &quot;&quot;&quot;</span>
+<a name="l138"><span class="ln">138  </span></a>    <span class="s1">__tracebackhide__ = </span><span class="s2">True</span>
+<a name="l139"><span class="ln">139  </span></a>    <span class="s2">raise </span><span class="s1">Skipped(msg=msg</span><span class="s2">, </span><span class="s1">allow_module_level=allow_module_level)</span>
+<a name="l140"><span class="ln">140  </span></a>
+<a name="l141"><span class="ln">141  </span></a>
+<a name="l142"><span class="ln">142  </span></a><span class="s1">@_with_exception(Failed)</span>
+<a name="l143"><span class="ln">143  </span></a><span class="s2">def </span><span class="s1">fail(msg: str = </span><span class="s4">&quot;&quot;</span><span class="s2">, </span><span class="s1">pytrace: bool = </span><span class="s2">True</span><span class="s1">) -&gt; </span><span class="s4">&quot;NoReturn&quot;</span><span class="s1">:</span>
+<a name="l144"><span class="ln">144  </span></a>    <span class="s0">&quot;&quot;&quot;Explicitly fail an executing test with the given message. 
+<a name="l145"><span class="ln">145  </span></a> 
+<a name="l146"><span class="ln">146  </span></a>    :param str msg: 
+<a name="l147"><span class="ln">147  </span></a>        The message to show the user as reason for the failure. 
+<a name="l148"><span class="ln">148  </span></a>    :param bool pytrace: 
+<a name="l149"><span class="ln">149  </span></a>        If False, msg represents the full failure information and no 
+<a name="l150"><span class="ln">150  </span></a>        python traceback will be reported. 
+<a name="l151"><span class="ln">151  </span></a>    &quot;&quot;&quot;</span>
+<a name="l152"><span class="ln">152  </span></a>    <span class="s1">__tracebackhide__ = </span><span class="s2">True</span>
+<a name="l153"><span class="ln">153  </span></a>    <span class="s2">raise </span><span class="s1">Failed(msg=msg</span><span class="s2">, </span><span class="s1">pytrace=pytrace)</span>
+<a name="l154"><span class="ln">154  </span></a>
+<a name="l155"><span class="ln">155  </span></a>
+<a name="l156"><span class="ln">156  </span></a><span class="s2">class </span><span class="s1">XFailed(Failed):</span>
+<a name="l157"><span class="ln">157  </span></a>    <span class="s0">&quot;&quot;&quot;Raised from an explicit call to pytest.xfail().&quot;&quot;&quot;</span>
+<a name="l158"><span class="ln">158  </span></a>
+<a name="l159"><span class="ln">159  </span></a>
+<a name="l160"><span class="ln">160  </span></a><span class="s1">@_with_exception(XFailed)</span>
+<a name="l161"><span class="ln">161  </span></a><span class="s2">def </span><span class="s1">xfail(reason: str = </span><span class="s4">&quot;&quot;</span><span class="s1">) -&gt; </span><span class="s4">&quot;NoReturn&quot;</span><span class="s1">:</span>
+<a name="l162"><span class="ln">162  </span></a>    <span class="s0">&quot;&quot;&quot;Imperatively xfail an executing test or setup function with the given reason. 
+<a name="l163"><span class="ln">163  </span></a> 
+<a name="l164"><span class="ln">164  </span></a>    This function should be called only during testing (setup, call or teardown). 
+<a name="l165"><span class="ln">165  </span></a> 
+<a name="l166"><span class="ln">166  </span></a>    .. note:: 
+<a name="l167"><span class="ln">167  </span></a>        It is better to use the :ref:`pytest.mark.xfail ref` marker when 
+<a name="l168"><span class="ln">168  </span></a>        possible to declare a test to be xfailed under certain conditions 
+<a name="l169"><span class="ln">169  </span></a>        like known bugs or missing features. 
+<a name="l170"><span class="ln">170  </span></a>    &quot;&quot;&quot;</span>
+<a name="l171"><span class="ln">171  </span></a>    <span class="s1">__tracebackhide__ = </span><span class="s2">True</span>
+<a name="l172"><span class="ln">172  </span></a>    <span class="s2">raise </span><span class="s1">XFailed(reason)</span>
+<a name="l173"><span class="ln">173  </span></a>
+<a name="l174"><span class="ln">174  </span></a>
+<a name="l175"><span class="ln">175  </span></a><span class="s2">def </span><span class="s1">importorskip(</span>
+<a name="l176"><span class="ln">176  </span></a>    <span class="s1">modname: str</span><span class="s2">, </span><span class="s1">minversion: Optional[str] = </span><span class="s2">None, </span><span class="s1">reason: Optional[str] = </span><span class="s2">None</span>
+<a name="l177"><span class="ln">177  </span></a><span class="s1">) -&gt; Any:</span>
+<a name="l178"><span class="ln">178  </span></a>    <span class="s0">&quot;&quot;&quot;Import and return the requested module ``modname``, or skip the 
+<a name="l179"><span class="ln">179  </span></a>    current test if the module cannot be imported. 
+<a name="l180"><span class="ln">180  </span></a> 
+<a name="l181"><span class="ln">181  </span></a>    :param str modname: 
+<a name="l182"><span class="ln">182  </span></a>        The name of the module to import. 
+<a name="l183"><span class="ln">183  </span></a>    :param str minversion: 
+<a name="l184"><span class="ln">184  </span></a>        If given, the imported module's ``__version__`` attribute must be at 
+<a name="l185"><span class="ln">185  </span></a>        least this minimal version, otherwise the test is still skipped. 
+<a name="l186"><span class="ln">186  </span></a>    :param str reason: 
+<a name="l187"><span class="ln">187  </span></a>        If given, this reason is shown as the message when the module cannot 
+<a name="l188"><span class="ln">188  </span></a>        be imported. 
+<a name="l189"><span class="ln">189  </span></a> 
+<a name="l190"><span class="ln">190  </span></a>    :returns: 
+<a name="l191"><span class="ln">191  </span></a>        The imported module. This should be assigned to its canonical name. 
+<a name="l192"><span class="ln">192  </span></a> 
+<a name="l193"><span class="ln">193  </span></a>    Example:: 
+<a name="l194"><span class="ln">194  </span></a> 
+<a name="l195"><span class="ln">195  </span></a>        docutils = pytest.importorskip(&quot;docutils&quot;) 
+<a name="l196"><span class="ln">196  </span></a>    &quot;&quot;&quot;</span>
+<a name="l197"><span class="ln">197  </span></a>    <span class="s2">import </span><span class="s1">warnings</span>
+<a name="l198"><span class="ln">198  </span></a>
+<a name="l199"><span class="ln">199  </span></a>    <span class="s1">__tracebackhide__ = </span><span class="s2">True</span>
+<a name="l200"><span class="ln">200  </span></a>    <span class="s1">compile(modname</span><span class="s2">, </span><span class="s4">&quot;&quot;</span><span class="s2">, </span><span class="s4">&quot;eval&quot;</span><span class="s1">)  </span><span class="s3"># to catch syntaxerrors</span>
+<a name="l201"><span class="ln">201  </span></a>
+<a name="l202"><span class="ln">202  </span></a>    <span class="s2">with </span><span class="s1">warnings.catch_warnings():</span>
+<a name="l203"><span class="ln">203  </span></a>        <span class="s3"># Make sure to ignore ImportWarnings that might happen because</span>
+<a name="l204"><span class="ln">204  </span></a>        <span class="s3"># of existing directories with the same name we're trying to</span>
+<a name="l205"><span class="ln">205  </span></a>        <span class="s3"># import but without a __init__.py file.</span>
+<a name="l206"><span class="ln">206  </span></a>        <span class="s1">warnings.simplefilter(</span><span class="s4">&quot;ignore&quot;</span><span class="s1">)</span>
+<a name="l207"><span class="ln">207  </span></a>        <span class="s2">try</span><span class="s1">:</span>
+<a name="l208"><span class="ln">208  </span></a>            <span class="s1">__import__(modname)</span>
+<a name="l209"><span class="ln">209  </span></a>        <span class="s2">except </span><span class="s1">ImportError </span><span class="s2">as </span><span class="s1">exc:</span>
+<a name="l210"><span class="ln">210  </span></a>            <span class="s2">if </span><span class="s1">reason </span><span class="s2">is None</span><span class="s1">:</span>
+<a name="l211"><span class="ln">211  </span></a>                <span class="s1">reason = </span><span class="s4">f&quot;could not import </span><span class="s2">{</span><span class="s1">modname</span><span class="s2">!r}</span><span class="s4">: </span><span class="s2">{</span><span class="s1">exc</span><span class="s2">}</span><span class="s4">&quot;</span>
+<a name="l212"><span class="ln">212  </span></a>            <span class="s2">raise </span><span class="s1">Skipped(reason</span><span class="s2">, </span><span class="s1">allow_module_level=</span><span class="s2">True</span><span class="s1">) </span><span class="s2">from None</span>
+<a name="l213"><span class="ln">213  </span></a>    <span class="s1">mod = sys.modules[modname]</span>
+<a name="l214"><span class="ln">214  </span></a>    <span class="s2">if </span><span class="s1">minversion </span><span class="s2">is None</span><span class="s1">:</span>
+<a name="l215"><span class="ln">215  </span></a>        <span class="s2">return </span><span class="s1">mod</span>
+<a name="l216"><span class="ln">216  </span></a>    <span class="s1">verattr = getattr(mod</span><span class="s2">, </span><span class="s4">&quot;__version__&quot;</span><span class="s2">, None</span><span class="s1">)</span>
+<a name="l217"><span class="ln">217  </span></a>    <span class="s2">if </span><span class="s1">minversion </span><span class="s2">is not None</span><span class="s1">:</span>
+<a name="l218"><span class="ln">218  </span></a>        <span class="s3"># Imported lazily to improve start-up time.</span>
+<a name="l219"><span class="ln">219  </span></a>        <span class="s2">from </span><span class="s1">packaging.version </span><span class="s2">import </span><span class="s1">Version</span>
+<a name="l220"><span class="ln">220  </span></a>
+<a name="l221"><span class="ln">221  </span></a>        <span class="s2">if </span><span class="s1">verattr </span><span class="s2">is None or </span><span class="s1">Version(verattr) &lt; Version(minversion):</span>
+<a name="l222"><span class="ln">222  </span></a>            <span class="s2">raise </span><span class="s1">Skipped(</span>
+<a name="l223"><span class="ln">223  </span></a>                <span class="s4">&quot;module %r has __version__ %r, required is: %r&quot;</span>
+<a name="l224"><span class="ln">224  </span></a>                <span class="s1">% (modname</span><span class="s2">, </span><span class="s1">verattr</span><span class="s2">, </span><span class="s1">minversion)</span><span class="s2">,</span>
+<a name="l225"><span class="ln">225  </span></a>                <span class="s1">allow_module_level=</span><span class="s2">True,</span>
+<a name="l226"><span class="ln">226  </span></a>            <span class="s1">)</span>
+<a name="l227"><span class="ln">227  </span></a>    <span class="s2">return </span><span class="s1">mod</span>
+<a name="l228"><span class="ln">228  </span></a></pre>
+</body>
+</html>
